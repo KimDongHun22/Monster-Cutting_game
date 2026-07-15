@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>좀비 슬래시: 공주 구출 작전</title>
+<style>
+:root{
+  --bg-deep:#120821;
+  --bg-deep-2:#1a0e2b;
+  --panel:#1f1233;
+  --panel-2:#2a1846;
+  --line:#3c2a5c;
+  --text-light:#f1e9fb;
+  --text-dim:#b7a3d6;
+  --accent-glow:#9ce66b;
+  --accent-glow-2:#c6ff8f;
+  --blood:#c23553;
+  --gold:#f0c869;
+  --gold-2:#ffe4a3;
+  --fire:#ff7a2e;
+
+  --zombie-1:#8bc34a;   --zombie-2:#4f7a26;
+  --dracula-1:#8146c9;  --dracula-2:#341a54;
+  --mummy-1:#e3cca0;    --mummy-2:#b89665;
+  --frank-1:#9fc2a0;    --frank-2:#4d6b52;
+  --witch-1:#7c4fae;    --witch-2:#2c1743;
+  --princess-1:#fff2cf; --princess-2:#ffb3d6;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html,body{
+  margin:0; padding:0; height:100%; overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% -10%, #2a1848 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, #24123c 0%, transparent 50%),
+    var(--bg-deep);
+  color:var(--text-light);
+  font-family:'Baloo 2','Nunito',system-ui,sans-serif;
+  touch-action:none;
+  overscroll-behavior:none;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Baloo+2:wght@500;600;700;800&display=swap');
+
+#app{
+  position:relative; width:100%; height:100%;
+  max-width:480px; margin:0 auto;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+
+#app::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.15), transparent),
+    radial-gradient(2px 2px at 70% 65%, rgba(255,255,255,.1), transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.12), transparent),
+    radial-gradient(1.5px 1.5px at 85% 20%, rgba(255,255,255,.1), transparent);
+}
+
+.screen{
+  position:absolute; inset:0; z-index:5;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px; text-align:center; overflow-y:auto;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(140,80,220,.18), transparent 60%),
+    var(--bg-deep);
+}
+.screen.active{ display:flex; }
+
+.game-title{
+  font-family:'Cinzel', serif; font-weight:800;
+  font-size:clamp(28px,8vw,40px);
+  letter-spacing:1px;
+  color:var(--gold);
+  text-shadow: 0 0 18px rgba(240,200,105,.55), 0 2px 0 #6b3a1a;
+  margin:0 0 6px;
+}
+.game-subtitle{
+  font-family:'Cinzel', serif; font-weight:600;
+  font-size:clamp(15px,4.4vw,19px);
+  color:var(--accent-glow-2);
+  text-shadow:0 0 10px rgba(156,230,107,.5);
+  margin:0 0 22px;
+}
+.flavor-text{
+  color:var(--text-dim); font-size:14px; line-height:1.6;
+  max-width:320px; margin:0 0 26px;
+}
+.flavor-text b{ color:var(--gold-2); }
+
+.emoji-hero{ font-size:60px; margin-bottom:8px; filter:drop-shadow(0 8px 18px rgba(0,0,0,.5)); }
+
+.btn-primary{
+  font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;
+  color:#1a0e2b; background:linear-gradient(160deg, var(--accent-glow-2), var(--accent-glow));
+  border:none; border-radius:999px; padding:15px 38px;
+  box-shadow:0 6px 0 #4f7a26, 0 10px 22px rgba(0,0,0,.45);
+  cursor:pointer; letter-spacing:.5px;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn-primary:active{ transform:translateY(4px); box-shadow:0 2px 0 #4f7a26, 0 4px 10px rgba(0,0,0,.4); }
+
+.btn-secondary{
+  margin-top:12px; background:transparent; border:1.5px solid var(--line);
+  color:var(--text-dim); font-family:'Baloo 2',sans-serif; font-weight:600;
+  border-radius:999px; padding:10px 22px; font-size:14px; cursor:pointer;
+}
+
+#game-screen{ position:relative; padding:14px 14px 10px; z-index:1; display:none; flex-direction:column; }
+#game-screen.active{ display:flex; }
+
+#hud{ display:flex; align-items:center; gap:10px; margin-bottom:10px; z-index:2; }
+.hud-badge{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  padding:6px 12px; display:flex; flex-direction:column; align-items:flex-start; min-width:56px;
+}
+.hud-badge .label{ font-size:10px; color:var(--text-dim); letter-spacing:.5px; }
+.hud-badge .value{ font-family:'Cinzel',serif; font-weight:700; font-size:17px; color:var(--gold-2); }
+
+#timer-wrap{
+  flex:1; height:18px; background:var(--panel); border:1px solid var(--line);
+  border-radius:999px; overflow:hidden; position:relative;
+}
+#timer-fill{
+  height:100%; width:100%; border-radius:999px;
+  background:linear-gradient(90deg, var(--accent-glow), var(--accent-glow-2));
+  transition:width .12s linear, background .3s ease;
+  box-shadow:0 0 12px rgba(156,230,107,.6);
+}
+#timer-label{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:10.5px; font-weight:700; color:#1a0e2b; letter-spacing:.5px;
+}
+
+#board-wrap{
+  position:relative; width:100%; aspect-ratio:1/1;
+  background:linear-gradient(160deg, var(--panel-2), var(--bg-deep-2));
+  border:2px solid var(--line); border-radius:18px;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5);
+  overflow:hidden; margin:0 auto; touch-action:none;
+}
+#board{ position:absolute; inset:8px; }
+
+#board-wrap::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px calc(100%/7)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px calc(100%/7));
+}
+
+#particle-layer{ position:absolute; inset:0; z-index:6; pointer-events:none; overflow:visible; }
+
+#toast{
+  position:absolute; top:70px; left:50%; transform:translate(-50%,-14px);
+  background:rgba(20,10,35,.92); border:1px solid var(--gold);
+  color:var(--gold-2); font-weight:700; font-size:13.5px;
+  padding:10px 20px; border-radius:999px; white-space:nowrap;
+  opacity:0; pointer-events:none; z-index:20;
+  box-shadow:0 8px 20px rgba(0,0,0,.5);
+  transition:opacity .25s ease, transform .25s ease;
+}
+#toast.show{ opacity:1; transform:translate(-50%,0); }
+
+.block{
+  position:absolute; border-radius:15px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.4);
+  transition:top .3s cubic-bezier(.34,1.56,.64,1), left .3s cubic-bezier(.34,1.56,.64,1), transform .16s ease, opacity .18s ease, box-shadow .15s ease;
+  cursor:pointer; user-select:none; z-index:1;
+  overflow:visible;
+}
+.block.picked{
+  box-shadow:0 0 0 3px rgba(255,255,255,.55), 0 0 16px rgba(255,255,255,.45), inset 0 -5px 0 rgba(0,0,0,.22);
+  transform:scale(1.08);
+  z-index:4;
+}
+.block.invalid-shake{ animation:invalid-shake .38s ease; z-index:4; }
+@keyframes invalid-shake{
+  0%,100%{ transform:translateX(0) scale(1); }
+  20%{ transform:translateX(-9px) rotate(-5deg); }
+  40%{ transform:translateX(8px) rotate(5deg); }
+  60%{ transform:translateX(-6px) rotate(-3deg); }
+  80%{ transform:translateX(5px) rotate(3deg); }
+}
+.block.destroying{ animation:destroy-pop .22s ease-in forwards; z-index:5; }
+.block.rescued{ animation:rescue-rise .42s ease-out forwards; z-index:8; }
+.block.hurt{ animation:hurt-flash .35s ease-out; }
+@keyframes hurt-flash{
+  0%{ filter:brightness(1); }
+  30%{ filter:brightness(2) saturate(0); }
+  100%{ filter:brightness(1); }
+}
+@keyframes destroy-pop{
+  0%{ transform:scale(1) rotate(0); opacity:1; }
+  55%{ transform:scale(1.25) rotate(10deg); opacity:.85; }
+  100%{ transform:scale(0.05) rotate(30deg); opacity:0; }
+}
+@keyframes rescue-rise{
+  0%{ transform:translateY(0) scale(1) rotate(0deg); opacity:1; filter:brightness(1); }
+  40%{ transform:translateY(-20px) scale(1.5) rotate(-8deg); opacity:1; filter:brightness(1.8); }
+  100%{ transform:translateY(-90px) scale(1.9) rotate(10deg); opacity:0; filter:brightness(2.2); }
+}
+
+.face{ position:relative; width:58%; height:46%; margin-top:6%; }
+/* 좀비 계열은 눈/입뿐 아니라 몸 전체(얼굴 파트)가 살짝 좌우로 까딱거림 -> 순간적으로 헷갈리게 */
+.block:not(.princess) .face{ animation: body-wobble 2.3s ease-in-out infinite; }
+@keyframes body-wobble{
+  0%,100%{ transform:translateX(-3px) rotate(-3deg); }
+  50%{ transform:translateX(3px) rotate(3deg); }
+}
+.eyes{ position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; }
+.eye{
+  width:22%; aspect-ratio:1/1; border-radius:50%; background:#1a0e2b;
+  animation:eye-roll 2.6s ease-in-out infinite;
+}
+.mouth{
+  position:absolute; bottom:2%; left:22%; right:22%; height:18%;
+  border-radius:0 0 10px 10px; background:#1a0e2b;
+  animation:mouth-wiggle 1.9s ease-in-out infinite;
+  transform-origin:center top;
+}
+@keyframes eye-roll{ 0%,100%{ transform:translateX(-15%);} 50%{ transform:translateX(15%);} }
+@keyframes mouth-wiggle{ 0%,100%{ transform:scaleX(1) rotate(0deg);} 50%{ transform:scaleX(1.2) rotate(-6deg);} }
+
+.block.zombie{ background:linear-gradient(160deg, var(--zombie-1), var(--zombie-2)); }
+.block.zombie .eye{ background:#1a1a0e; box-shadow:0 0 4px #2e3b0e; }
+
+.block.dracula{ background:linear-gradient(160deg, var(--dracula-1), var(--dracula-2)); }
+.block.dracula .eye{ background:#ff3b5c; box-shadow:0 0 6px #ff3b5c; }
+.block.dracula .face::after{
+  content:''; position:absolute; bottom:-4%; left:34%; width:6%; height:16%;
+  background:#fff; clip-path:polygon(0 0,100% 0,50% 100%);
+  box-shadow:20px 0 0 0 #fff;
+}
+.block.dracula::before{
+  content:''; position:absolute; top:2%; left:50%; transform:translateX(-50%);
+  width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent;
+  border-top:10px solid #1a0e2b; opacity:.85;
+}
+
+.block.mummy{ background: repeating-linear-gradient(115deg, var(--mummy-1) 0 9px, var(--mummy-2) 9px 18px); }
+.block.mummy .face{ height:30%; }
+.block.mummy .eye{ background:#3a2c1a; width:18%; }
+.block.mummy .mouth{ display:none; }
+
+.block.frank{ background:linear-gradient(160deg, var(--frank-1), var(--frank-2)); }
+.block.frank .eye{ background:#22321f; }
+.block.frank::before, .block.frank::after{
+  content:''; position:absolute; top:46%; width:14%; aspect-ratio:1/1; border-radius:50%;
+  background:#c7c7b8; box-shadow:0 0 4px rgba(0,0,0,.4);
+}
+.block.frank::before{ left:-4%; }
+.block.frank::after{ right:-4%; }
+
+.block.witch{ background:linear-gradient(160deg, var(--witch-1), var(--witch-2)); }
+.block.witch .eye{ background:#0d0616; box-shadow:0 0 6px #b58cf0; }
+.block.witch::before{
+  content:''; position:absolute; top:-30%; left:50%; transform:translateX(-50%);
+  width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent;
+  border-bottom:26px solid var(--witch-2);
+}
+
+.block.princess{
+  background:linear-gradient(160deg, var(--princess-1), var(--princess-2));
+  border-radius:50% 50% 28% 28% / 60% 60% 22% 22%;
+  animation:princess-glow 1.7s ease-in-out infinite;
+}
+@keyframes princess-glow{
+  0%,100%{ box-shadow:inset 0 -5px 0 rgba(0,0,0,.12), inset 0 3px 0 rgba(255,255,255,.4), 0 0 10px 2px rgba(255,214,140,.55), 0 4px 10px rgba(0,0,0,.4); }
+  50%{ box-shadow:inset 0 -5px 0 rgba(0,0,0,.12), inset 0 3px 0 rgba(255,255,255,.4), 0 0 26px 9px rgba(255,214,140,.95), 0 4px 10px rgba(0,0,0,.4); }
+}
+.block.princess .eye{ background:#5c3a1a; animation:eye-sparkle 1.6s ease-in-out infinite; }
+.block.princess .mouth{ width:22%; height:10%; border-radius:50%; background:#e88; opacity:.7; }
+@keyframes eye-sparkle{ 0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0);} 50%{ box-shadow:0 0 6px 2px rgba(255,255,255,.9);} }
+.crown-emoji{
+  position:absolute; top:-42%; left:50%; transform:translateX(-50%);
+  font-size:20px; line-height:1; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+  animation:crown-bob 1.4s ease-in-out infinite;
+}
+@keyframes crown-bob{ 0%,100%{ transform:translateX(-50%) translateY(0) rotate(-4deg);} 50%{ transform:translateX(-50%) translateY(-3px) rotate(4deg);} }
+.sparkle{
+  position:absolute; width:8px; height:8px; background:var(--gold-2);
+  clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0 50%,37% 38%);
+  animation:twinkle 1.4s ease-in-out infinite;
+}
+.sparkle.s1{ top:6%; left:8%; animation-delay:0s; }
+.sparkle.s2{ top:14%; right:6%; animation-delay:.4s; }
+.sparkle.s3{ bottom:16%; left:14%; animation-delay:.8s; }
+@keyframes twinkle{ 0%,100%{ opacity:.25; transform:scale(.5);} 50%{ opacity:1; transform:scale(1.15);} }
+.tear{
+  position:absolute; bottom:22%; left:30%; width:6px; height:9px; border-radius:50% 50% 50% 0;
+  background:#6bb7ff; transform:rotate(45deg); opacity:0; animation:tear-drip 2.8s ease-in infinite;
+}
+@keyframes tear-drip{
+  0%{ opacity:0; transform:translateY(0) rotate(45deg);}
+  10%{ opacity:.85;}
+  70%{ opacity:.6; transform:translateY(11px) rotate(45deg);}
+  100%{ opacity:0; transform:translateY(14px) rotate(45deg);}
+}
+
+.particle{ position:absolute; pointer-events:none; will-change:transform,opacity; margin:-8px 0 0 -8px; }
+.particle.bone{
+  width:8px; height:18px; background:linear-gradient(#fffef6,#f4ecd8); border-radius:3px;
+  box-shadow:0 0 4px rgba(0,0,0,.45);
+  animation:particle-fly .68s cubic-bezier(.22,.75,.28,1) forwards;
+}
+.particle.fire{
+  width:12px; height:12px; border-radius:50%;
+  background:radial-gradient(circle, #ffe08a, #ff7a2e 60%, transparent 75%);
+  animation:particle-fly .55s ease-out forwards;
+}
+.particle.spark{
+  width:4px; height:16px; background:linear-gradient(#fff8c9, #ffcf3b); border-radius:2px;
+  animation:particle-fly .5s ease-out forwards;
+}
+.particle.gold{
+  width:8px; height:8px; background:var(--gold-2);
+  clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0 50%,37% 38%);
+  animation:particle-fly .75s ease-out forwards;
+}
+@keyframes particle-fly{
+  0%{ transform:translate(0,0) scale(1) rotate(0deg); opacity:1; }
+  42%{ transform:translate(var(--tx-mid),var(--ty-mid)) scale(calc(var(--scale) * 1.05)) rotate(calc(var(--rot) * .5)); opacity:1; }
+  100%{ transform:translate(var(--tx),var(--ty)) scale(calc(var(--scale) * .12)) rotate(var(--rot)); opacity:0; }
+}
+
+.shockwave{
+  position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%;
+  border:3px solid rgba(255,255,255,.85); pointer-events:none;
+  animation:shockwave-pop .38s ease-out forwards;
+}
+.shockwave.fire{ border-color:rgba(255,140,50,.9); }
+.shockwave.spark{ border-color:rgba(255,220,80,.9); }
+.shockwave.gold{ border-color:rgba(255,225,150,.95); }
+@keyframes shockwave-pop{ 0%{ transform:scale(.2); opacity:.9;} 100%{ transform:scale(3.6); opacity:0;} }
+
+/* 화염방사기 조준 시 보드 테두리 강조 */
+#board-wrap.targeting{ box-shadow:inset 0 0 0 3px var(--fire), 0 0 24px rgba(255,122,46,.6); }
+
+/* 공주 구출 성공 시 보드 전체를 훑는 골드 플래시 */
+#rescue-flash{
+  position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0;
+  background:radial-gradient(circle, rgba(255,232,170,.95), rgba(255,214,140,.35) 45%, rgba(255,214,140,0) 72%);
+}
+#rescue-flash.show{ animation:rescue-flash-pop .7s ease-out forwards; }
+@keyframes rescue-flash-pop{
+  0%{ opacity:0; transform:scale(.25); }
+  30%{ opacity:1; transform:scale(1.05); }
+  100%{ opacity:0; transform:scale(1.6); }
+}
+
+/* 공주가 매치에 휘말렸을 때: 게임을 끝내지 않고 화면을 잠깐 가리는 벌칙 연출 */
+#princess-hurt-overlay{
+  position:absolute; inset:0; z-index:60;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(10,4,22,.86);
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+#princess-hurt-overlay.show{ opacity:1; pointer-events:auto; }
+.hurt-crown{ font-size:64px; animation:hurt-shake .45s ease-in-out infinite; filter:drop-shadow(0 0 20px rgba(255,180,210,.7)); }
+.hurt-face{ font-size:80px; margin-top:-6px; animation:hurt-shake .45s ease-in-out infinite reverse; }
+@keyframes hurt-shake{
+  0%,100%{ transform:rotate(-7deg) translateX(-4px); }
+  50%{ transform:rotate(7deg) translateX(4px); }
+}
+.hurt-text{
+  margin-top:10px; font-family:'Cinzel',serif; font-weight:700; font-size:16px;
+  color:var(--gold-2); text-shadow:0 0 10px rgba(240,200,105,.6); text-align:center;
+}
+.hurt-tears{ display:flex; gap:14px; margin-top:8px; }
+.hurt-tears span{ font-size:20px; animation:tear-fall 1s ease-in infinite; opacity:0; }
+.hurt-tears span:nth-child(2){ animation-delay:.25s; }
+.hurt-tears span:nth-child(3){ animation-delay:.5s; }
+@keyframes tear-fall{
+  0%{ transform:translateY(-4px); opacity:0; }
+  25%{ opacity:1; }
+  100%{ transform:translateY(24px); opacity:0; }
+}
+
+/* 새 무기 해금: 큰 아이콘이 화면 중앙에서 무기 슬롯 자리로 날아가는 연출 */
+.weapon-unlock-fly{
+  position:fixed; z-index:200; left:0; top:0;
+  font-size:74px; line-height:1;
+  transform:translate(-50%,-50%) scale(1) rotate(0deg);
+  filter:drop-shadow(0 0 22px rgba(255,255,255,.85));
+  pointer-events:none;
+}
+.weapon-unlock-fly.fly{
+  transition:transform .95s cubic-bezier(.28,.85,.25,1), font-size .95s ease;
+  transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3) rotate(360deg);
+}
+.weapon-slot.just-unlocked{ animation:slot-pop .6s ease-out; }
+@keyframes slot-pop{
+  0%{ transform:scale(1.55); box-shadow:0 0 0 4px var(--gold), 0 0 34px 10px rgba(240,200,105,.9); }
+  100%{ transform:scale(1); }
+}
+
+#weapon-bar{ display:flex; gap:10px; margin-top:10px; z-index:2; }
+.weapon-slot{
+  flex:1; position:relative; background:var(--panel); border:1.5px solid var(--line);
+  border-radius:14px; padding:8px 4px 7px; display:flex; flex-direction:column;
+  align-items:center; gap:2px; cursor:pointer;
+  transition:transform .12s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.weapon-slot .icon{ font-size:22px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.weapon-slot .name{ font-size:11px; color:var(--text-dim); font-weight:700; }
+.weapon-slot.active{
+  border-color:var(--accent-glow-2);
+  box-shadow:0 0 0 2px rgba(156,230,107,.35), 0 0 14px rgba(156,230,107,.4);
+  transform:translateY(-2px);
+}
+.weapon-slot.active .name{ color:var(--accent-glow-2); }
+.weapon-slot.locked{ opacity:.42; filter:grayscale(.6); cursor:not-allowed; }
+.weapon-slot.locked .lock{ position:absolute; top:4px; right:6px; font-size:11px; }
+.weapon-slot.arming{ animation:arm-pulse .9s ease-in-out infinite; border-color:var(--fire); }
+@keyframes arm-pulse{ 0%,100%{ box-shadow:0 0 0 2px rgba(255,122,46,.4);} 50%{ box-shadow:0 0 15px 5px rgba(255,122,46,.85);} }
+.weapon-slot.cooling{ opacity:.5; cursor:not-allowed; }
+.weapon-slot.cooling .name{ color:var(--text-dim); }
+
+#gameover-screen .emoji-hero{ font-size:52px; }
+#final-score{
+  font-family:'Cinzel',serif; font-weight:800; font-size:38px; color:var(--gold-2);
+  text-shadow:0 0 16px rgba(240,200,105,.5); margin:4px 0 14px;
+}
+#gameover-reason{ color:var(--text-dim); font-size:14px; margin-bottom:2px; }
+
+#ranking-panel{
+  width:100%; max-width:280px; background:var(--panel); border:1px solid var(--line);
+  border-radius:14px; padding:12px 14px; margin:4px 0 16px;
+}
+.ranking-title{ font-weight:800; font-size:13px; color:var(--gold-2); margin:0 0 8px; }
+#ranking-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px; }
+.rank-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); padding:4px 9px; border-radius:8px; background:rgba(255,255,255,.03); }
+.rank-row.mine{ background:rgba(240,200,105,.18); border:1px solid var(--gold); color:var(--gold-2); font-weight:700; }
+.rank-num{ font-weight:800; }
+#my-rank{ margin:9px 0 0; font-size:12px; color:var(--text-dim); }
+
+@media (max-width:360px){
+  .hud-badge{ padding:5px 9px; min-width:46px; }
+  .hud-badge .value{ font-size:15px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="start-screen" class="screen active">
+    <div class="emoji-hero">🏰🧟</div>
+    <h1 class="game-title">좀비 슬래시</h1>
+    <p class="game-subtitle">공주 구출 작전</p>
+    <p class="flavor-text">
+      좀비 블록을 <b>상하좌우로 밀어서</b> 같은 색 3개 이상을 맞추면 사라져요!<br>
+      <b>👑 공주님</b>이 매치에 휘말리면 Power가 크게 줄어들어요.
+      Power가 0이 되면 게임 오버, 맨 아래 줄까지 무사히 내려오면 구출 성공!
+    </p>
+    <button class="btn-primary" id="btn-start">⚔️ 게임 시작</button>
+  </div>
+
+  <div id="game-screen">
+    <div id="hud">
+      <div class="hud-badge"><span class="label">LEVEL</span><span class="value" id="hud-level">1</span></div>
+      <div class="hud-badge"><span class="label">SCORE</span><span class="value" id="hud-score">0</span></div>
+      <div id="timer-wrap"><div id="timer-fill"></div><div id="timer-label">POWER</div></div>
+    </div>
+
+    <div id="board-wrap">
+      <div id="board"></div>
+      <div id="particle-layer"></div>
+      <div id="rescue-flash"></div>
+    </div>
+    <div id="toast"></div>
+
+    <div id="princess-hurt-overlay">
+      <div class="hurt-crown">👑</div>
+      <div class="hurt-face">😢</div>
+      <div class="hurt-tears"><span>💧</span><span>💧</span><span>💧</span></div>
+      <p class="hurt-text">앗! 공주님이 다쳤어요...</p>
+    </div>
+
+    <div id="weapon-bar"></div>
+  </div>
+
+  <div id="gameover-screen" class="screen">
+    <div class="emoji-hero">💀</div>
+    <h1 class="game-title" style="color:var(--blood); text-shadow:0 0 16px rgba(194,53,83,.6);">게임 오버</h1>
+    <p id="gameover-reason">시간이 다 되었어요...</p>
+    <div id="final-score">0</div>
+
+    <div id="ranking-panel">
+      <p class="ranking-title">🏆 명예의 전당 TOP 5</p>
+      <ol id="ranking-list"></ol>
+      <p id="my-rank"></p>
+    </div>
+
+    <button class="btn-primary" id="btn-restart">🔄 다시 도전하기</button>
+    <button class="btn-secondary" id="btn-home">처음 화면으로</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- 상수 ---------------- */
+  const ROWS = 7, COLS = 7;
+  const ZOMBIE_TYPES = ['zombie','dracula','mummy','frank','witch'];
+  const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+  const PRINCESS_CHANCE = 0.06;
+  const MAX_PRINCESS_ON_BOARD = 2;
+
+  const LEVEL_UP_SCORE = 550;              // 레벨업에 필요한 점수 (더 완만하게)
+  const TIME_MAX = 100;
+  const TIME_BASE_DEPLETION = 1.0;         // 초당 Power 감소량 (더욱 느리게)
+  const TIME_DEPLETION_PER_LEVEL = 0.22;   // 레벨당 추가 감소량 (더욱 완만하게)
+  const TIME_RESTORE_PER_BLOCK = 4.5;      // 좀비를 자를 때마다 채워지는 Power (보상 강화)
+  const RESCUE_BONUS = 100;
+  const PRINCESS_HURT_LOCK_MS = 1500;      // 공주가 다쳤을 때 화면을 가리는 시간(밀리초)
+
+  const FLAME_RADIUS = 2;                  // 화염방사기 폭발 반경(체비셰프 거리)
+  const FLAME_COOLDOWN_MS = 15000;         // 화염방사기 재사용 대기시간
+
+  const RANKING_KEY = 'zombie_slash_rankings_v1';
+  const RANKING_STORE_MAX = 30;
+  const RANKING_DISPLAY_MAX = 5;
+
+  const WEAPONS = [
+    { id:'scythe',      name:'낫',       icon:'🔪', unlockLevel:1, scoreMul:1.0 },
+    { id:'sword',       name:'검',       icon:'⚔️', unlockLevel:2, scoreMul:1.0 },
+    { id:'chainsaw',    name:'전기톱',    icon:'🪚', unlockLevel:3, scoreMul:1.5 },
+    { id:'flamethrower',name:'화염방사기',icon:'🔥', unlockLevel:4 },
+  ];
+
+  /* ---------------- 상태 ---------------- */
+  let state = 'start';
+  let board = [];
+  let blocks = {};
+  let blockIdSeq = 1;
+  let cellSize = 0;
+
+  let score = 0;
+  let level = 1;
+  let timePower = TIME_MAX;
+  let currentWeaponId = 'scythe';           // 낫/검/전기톱 중 장착된 무기
+  let flamethrowerState = { armed:false, cooldownLeft:0 };
+  let lastCooldownSecRendered = -1;
+
+  let dragStartBlockId = null;
+  let dragStartClient = null;
+  let dragResolved = false;
+  let inputLocked = false; // 공주 피해 연출 중에는 입력을 잠깐 막는다
+
+  let rafId = null;
+  let lastFrameTs = null;
+  let memoryRankings = []; // localStorage 사용 불가 시 세션 내 임시 저장소
+
+  /* ---------------- DOM 참조 ---------------- */
+  const $ = (sel)=>document.querySelector(sel);
+  const startScreen   = $('#start-screen');
+  const gameScreen     = $('#game-screen');
+  const gameoverScreen = $('#gameover-screen');
+  const boardWrap = $('#board-wrap');
+  const boardEl   = $('#board');
+  const particleLayer = $('#particle-layer');
+  const weaponBarEl = $('#weapon-bar');
+  const hudLevel = $('#hud-level');
+  const hudScore = $('#hud-score');
+  const timerFill = $('#timer-fill');
+  const toastEl = $('#toast');
+  const princessHurtOverlay = $('#princess-hurt-overlay');
+  const rescueFlashEl = $('#rescue-flash');
+
+  /* ---------------- 유틸 ---------------- */
+  function inBounds(r,c){ return r>=0 && r<ROWS && c>=0 && c<COLS; }
+  function randomZombieType(){ return ZOMBIE_TYPES[Math.floor(Math.random()*ZOMBIE_TYPES.length)]; }
+  function countPrincessOnBoard(){
+    let c=0; for(const id in blocks){ if(blocks[id].type==='princess') c++; } return c;
+  }
+  function randomBlockType(){
+    if(countPrincessOnBoard() < MAX_PRINCESS_ON_BOARD && Math.random() < PRINCESS_CHANCE) return 'princess';
+    return randomZombieType();
+  }
+  let toastTimer = null;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1500);
+  }
+  function currentWeapon(){ return WEAPONS.find(w=>w.id===currentWeaponId); }
+
+  /* ---------------- 랭킹(localStorage, 실패 시 세션 메모리로 대체) ---------------- */
+  function loadRankings(){
+    try{
+      const raw = localStorage.getItem(RANKING_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return memoryRankings.slice(); }
+  }
+  function saveRankings(list){
+    try{ localStorage.setItem(RANKING_KEY, JSON.stringify(list)); }
+    catch(e){ memoryRankings = list; }
+  }
+  function submitScore(newScore){
+    const list = loadRankings();
+    const entry = { score:newScore, ts:Date.now() };
+    list.push(entry);
+    list.sort((a,b)=> b.score - a.score || a.ts - b.ts);
+    const rank = list.indexOf(entry) + 1;
+    const trimmed = list.slice(0, RANKING_STORE_MAX);
+    saveRankings(trimmed);
+    return { top: trimmed.slice(0, RANKING_DISPLAY_MAX), rank, totalCount:list.length, entry };
+  }
+
+  /* ---------------- 보드 데이터 모델 & 렌더링 ---------------- */
+  function createBlock(type, row, col, spawnAboveOffset){
+    const id = 'b' + (blockIdSeq++);
+    const el = document.createElement('div');
+    el.className = 'block ' + type;
+    el.dataset.id = id;
+
+    if(type !== 'princess'){
+      el.innerHTML = '<div class="face"><div class="eyes"><span class="eye"></span><span class="eye"></span></div><div class="mouth"></div></div>';
+    } else {
+      el.innerHTML =
+        '<span class="crown-emoji">👑</span>' +
+        '<div class="face"><div class="eyes"><span class="eye"></span><span class="eye"></span></div><div class="mouth"></div></div>' +
+        '<span class="sparkle s1"></span><span class="sparkle s2"></span><span class="sparkle s3"></span>' +
+        '<span class="tear"></span>';
+    }
+
+    // 애니메이션 지연을 랜덤화해서 블록마다 조금씩 다르게 움직이도록 함
+    const faceEl = el.querySelector('.face');
+    if(faceEl) faceEl.style.animationDelay = (-Math.random()*2.3).toFixed(2)+'s';
+    el.querySelectorAll('.eye').forEach(e=> e.style.animationDelay = (-Math.random()*2.6).toFixed(2)+'s');
+    const mouthEl = el.querySelector('.mouth');
+    if(mouthEl) mouthEl.style.animationDelay = (-Math.random()*1.9).toFixed(2)+'s';
+
+    boardEl.appendChild(el);
+    const block = { id, type, row, col, el };
+    blocks[id] = block;
+    positionBlock(block, spawnAboveOffset);
+    return block;
+  }
+
+  function positionBlock(block, spawnAboveOffset){
+    const gap = 4;
+    const size = cellSize - gap;
+    block.el.style.width = size + 'px';
+    block.el.style.height = size + 'px';
+    block.el.style.left = (block.col * cellSize + gap/2) + 'px';
+
+    if(spawnAboveOffset !== undefined){
+      block.el.style.transition = 'none';
+      block.el.style.top = ((block.row - spawnAboveOffset) * cellSize + gap/2) + 'px';
+      void block.el.offsetHeight;
+      requestAnimationFrame(()=>{
+        block.el.style.transition = '';
+        block.el.style.top = (block.row * cellSize + gap/2) + 'px';
+      });
+    } else {
+      block.el.style.top = (block.row * cellSize + gap/2) + 'px';
+    }
+  }
+
+  function recalcCellSize(){
+    cellSize = boardEl.clientWidth / COLS;
+    for(const id in blocks) positionBlock(blocks[id]);
+  }
+
+  function buildInitialBoard(){
+    board = Array.from({length:ROWS}, ()=>Array(COLS).fill(null));
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        let type;
+        let guard = 0;
+        do{
+          type = randomZombieType();
+          guard++;
+        } while(guard<30 && (
+          (c>=2 && board[r][c-1] && board[r][c-2] && blocks[board[r][c-1]].type===type && blocks[board[r][c-2]].type===type) ||
+          (r>=2 && board[r-1][c] && board[r-2][c] && blocks[board[r-1][c]].type===type && blocks[board[r-2][c]].type===type)
+        ));
+        const block = createBlock(type, r, c);
+        board[r][c] = block.id;
+      }
+    }
+    const pr = Math.floor(Math.random()*ROWS);
+    const pc = Math.floor(Math.random()*COLS);
+    const oldId = board[pr][pc];
+    if(oldId){ blocks[oldId].el.remove(); delete blocks[oldId]; }
+    const princessBlock = createBlock('princess', pr, pc);
+    board[pr][pc] = princessBlock.id;
+  }
+
+  function clearBoardDom(){ boardEl.innerHTML = ''; blocks = {}; board = []; }
+
+  /* ---------------- 입력 처리 (스왑 드래그 + 화염방사기 조준) ---------------- */
+  function blockUnderPoint(clientX, clientY){
+    const el = document.elementFromPoint(clientX, clientY);
+    if(!el) return null;
+    const blockEl = el.closest('.block');
+    if(!blockEl) return null;
+    return blocks[blockEl.dataset.id] || null;
+  }
+
+  function onPointerDown(e){
+    if(state !== 'playing' || inputLocked) return;
+
+    // 화염방사기 조준 중이면: 탭한 블록을 중심으로 즉시 발사
+    if(flamethrowerState.armed){
+      const target = blockUnderPoint(e.clientX, e.clientY);
+      if(target) triggerFlamethrower(target);
+      return;
+    }
+
+    const block = blockUnderPoint(e.clientX, e.clientY);
+    if(!block) return;
+    dragStartBlockId = block.id;
+    dragStartClient = { x:e.clientX, y:e.clientY };
+    dragResolved = false;
+    block.el.classList.add('picked');
+  }
+
+  function onPointerMove(e){
+    if(!dragStartBlockId || dragResolved || state!=='playing') return;
+    const dx = e.clientX - dragStartClient.x;
+    const dy = e.clientY - dragStartClient.y;
+    const threshold = cellSize * 0.32;
+    if(Math.max(Math.abs(dx),Math.abs(dy)) < threshold) return;
+
+    const a = blocks[dragStartBlockId];
+    if(!a){ dragStartBlockId=null; return; }
+    dragResolved = true;
+    a.el.classList.remove('picked');
+
+    let dr=0, dc=0;
+    if(Math.abs(dx) > Math.abs(dy)) dc = dx>0 ? 1 : -1;
+    else dr = dy>0 ? 1 : -1;
+
+    const nr = a.row+dr, nc = a.col+dc;
+    const startId = dragStartBlockId;
+    dragStartBlockId = null;
+    if(!inBounds(nr,nc)) return;
+    const targetId = board[nr][nc];
+    if(targetId) attemptSwap(startId, targetId);
+  }
+
+  function onPointerUp(){
+    if(dragStartBlockId){
+      const a = blocks[dragStartBlockId];
+      if(a) a.el.classList.remove('picked');
+    }
+    dragStartBlockId = null;
+    dragResolved = false;
+  }
+
+  /* ---------------- 스왑 & 매치 판정 ---------------- */
+  function doSwapData(a,b){
+    const tr=a.row, tc=a.col;
+    a.row=b.row; a.col=b.col;
+    b.row=tr; b.col=tc;
+    board[a.row][a.col]=a.id;
+    board[b.row][b.col]=b.id;
+    positionBlock(a);
+    positionBlock(b);
+  }
+
+  // 특정 좌표를 지나는 가로/세로 동일 타입 연속 구간(3개 이상)을 "런(run)" 형태로 반환
+  function findRunsAt(row,col){
+    const id = board[row] && board[row][col];
+    if(!id || !blocks[id]) return [];
+    const type = blocks[id].type;
+    const runs = [];
+
+    let left=col, right=col;
+    while(left-1>=0 && board[row][left-1] && blocks[board[row][left-1]] && blocks[board[row][left-1]].type===type) left--;
+    while(right+1<COLS && board[row][right+1] && blocks[board[row][right+1]] && blocks[board[row][right+1]].type===type) right++;
+    if(right-left+1>=3) runs.push({axis:'row', row, start:left, end:right});
+
+    let top=row, bottom=row;
+    while(top-1>=0 && board[top-1][col] && blocks[board[top-1][col]] && blocks[board[top-1][col]].type===type) top--;
+    while(bottom+1<ROWS && board[bottom+1][col] && blocks[board[bottom+1][col]] && blocks[board[bottom+1][col]].type===type) bottom++;
+    if(bottom-top+1>=3) runs.push({axis:'col', col, start:top, end:bottom});
+
+    return runs;
+  }
+
+  function combineRuns(posA, posB){
+    const runsA = findRunsAt(posA.row,posA.col);
+    const runsB = findRunsAt(posB.row,posB.col);
+    const map = new Map();
+    [...runsA, ...runsB].forEach(run=>{
+      const key = run.axis+':'+(run.axis==='row'?run.row:run.col)+':'+run.start+':'+run.end;
+      map.set(key, run);
+    });
+    return [...map.values()];
+  }
+
+  function runCells(run){
+    const ids=[];
+    if(run.axis==='row'){ for(let c=run.start;c<=run.end;c++) ids.push(board[run.row][c]); }
+    else { for(let r=run.start;r<=run.end;r++) ids.push(board[r][run.col]); }
+    return ids;
+  }
+
+  function baseMatchFromRuns(runs){
+    const set = new Set();
+    runs.forEach(run=> runCells(run).forEach(id=>{ if(id) set.add(id); }));
+    return set;
+  }
+
+  // 검: 매치된 줄 양 끝으로 "자른 길이만큼" 더 확장해서 다른 색 블록도 함께 파괴
+  function extendSword(runs){
+    const result = new Set();
+    for(const run of runs){
+      const len = run.end - run.start + 1;
+      if(run.axis==='row'){
+        for(let c=run.start-len; c<run.start; c++){ if(inBounds(run.row,c)){ const id=board[run.row][c]; if(id) result.add(id);} }
+        for(let c=run.end+1; c<=run.end+len; c++){ if(inBounds(run.row,c)){ const id=board[run.row][c]; if(id) result.add(id);} }
+      } else {
+        for(let r=run.start-len; r<run.start; r++){ if(inBounds(r,run.col)){ const id=board[r][run.col]; if(id) result.add(id);} }
+        for(let r=run.end+1; r<=run.end+len; r++){ if(inBounds(r,run.col)){ const id=board[r][run.col]; if(id) result.add(id);} }
+      }
+    }
+    return result;
+  }
+
+  // 전기톱: 검의 효과 + 한쪽 끝에서 한 번 꺾어서(수직/수평 전환) 추가로 파괴
+  function extendChainsaw(runs){
+    const result = extendSword(runs);
+    for(const run of runs){
+      const len = run.end - run.start + 1;
+      if(run.axis==='row'){
+        let bendCol = run.end + len;
+        if(!inBounds(run.row, bendCol)) bendCol = run.start - len;
+        if(inBounds(run.row, bendCol)){
+          const half = Math.floor(len/2);
+          for(let r=run.row-half; r<=run.row+half; r++){
+            if(inBounds(r,bendCol)){ const id=board[r][bendCol]; if(id) result.add(id); }
+          }
+        }
+      } else {
+        let bendRow = run.end + len;
+        if(!inBounds(bendRow, run.col)) bendRow = run.start - len;
+        if(inBounds(bendRow, run.col)){
+          const half = Math.floor(len/2);
+          for(let c=run.col-half; c<=run.col+half; c++){
+            if(inBounds(bendRow,c)){ const id=board[bendRow][c]; if(id) result.add(id); }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  function attemptSwap(idA, idB){
+    const a = blocks[idA], b = blocks[idB];
+    if(!a || !b || state!=='playing') return;
+
+    doSwapData(a,b); // 우선 스왑을 시각적으로 보여준다
+
+    setTimeout(()=>{
+      const runs = combineRuns({row:a.row,col:a.col}, {row:b.row,col:b.col});
+
+      if(runs.length===0){
+        // 매치가 안 만들어졌으면 흔들고 원위치로 복귀
+        a.el.classList.add('invalid-shake');
+        b.el.classList.add('invalid-shake');
+        setTimeout(()=>{
+          a.el.classList.remove('invalid-shake');
+          b.el.classList.remove('invalid-shake');
+          doSwapData(a,b);
+        }, 380);
+        return;
+      }
+
+      const baseSet = baseMatchFromRuns(runs);
+      const weapon = currentWeapon();
+      let finalSet = baseSet;
+      if(weapon.id === 'sword')    finalSet = new Set([...baseSet, ...extendSword(runs)]);
+      if(weapon.id === 'chainsaw') finalSet = new Set([...baseSet, ...extendChainsaw(runs)]);
+
+      destroyAndCascade(finalSet, weapon.scoreMul, 0);
+    }, 260);
+  }
+
+  function blockCenter(b){
+    return { x: b.col*cellSize + cellSize/2, y: b.row*cellSize + cellSize/2 };
+  }
+
+  /* ---------------- 파티클 ---------------- */
+  function spawnParticles(centerPoint, kind, count){
+    for(let i=0;i<count;i++){
+      const p = document.createElement('span');
+      p.className = 'particle ' + kind;
+      const angle = Math.random()*Math.PI*2;
+      const dist = 36 + Math.random()*50;
+      const midDist = dist*0.5;
+      const tx = Math.cos(angle)*dist;
+      const ty = Math.sin(angle)*dist + 22;
+      const txMid = Math.cos(angle)*midDist;
+      const tyMid = Math.sin(angle)*midDist - 20;
+      const scale = 0.75 + Math.random()*0.9;
+      const rot = 360 + Math.random()*560;
+      p.style.setProperty('--tx', tx.toFixed(1)+'px');
+      p.style.setProperty('--ty', ty.toFixed(1)+'px');
+      p.style.setProperty('--tx-mid', txMid.toFixed(1)+'px');
+      p.style.setProperty('--ty-mid', tyMid.toFixed(1)+'px');
+      p.style.setProperty('--scale', scale.toFixed(2));
+      p.style.setProperty('--rot', rot.toFixed(0)+'deg');
+      p.style.left = centerPoint.x + 'px';
+      p.style.top = centerPoint.y + 'px';
+      particleLayer.appendChild(p);
+      p.addEventListener('animationend', ()=>p.remove());
+    }
+    spawnShockwave(centerPoint, kind);
+  }
+
+  function spawnShockwave(centerPoint, kind){
+    const ring = document.createElement('span');
+    ring.className = 'shockwave ' + kind;
+    ring.style.left = centerPoint.x + 'px';
+    ring.style.top = centerPoint.y + 'px';
+    particleLayer.appendChild(ring);
+    ring.addEventListener('animationend', ()=>ring.remove());
+  }
+
+  /* ---------------- 공주 피해 처리 (게임오버/Power감소 대신 화면을 잠깐 가림) ---------------- */
+  function triggerPrincessHurtPenalty(){
+    inputLocked = true;
+    princessHurtOverlay.classList.add('show');
+    setTimeout(()=>{
+      princessHurtOverlay.classList.remove('show');
+      inputLocked = false;
+    }, PRINCESS_HURT_LOCK_MS);
+  }
+
+  /* ---------------- 파괴 -> 낙하 -> 연쇄(콤보) ---------------- */
+  function destroyAndCascade(idsSet, scoreMulTotal, cascadeDepth, particleKindOverride){
+    const ids = [...idsSet].filter(id=>blocks[id]);
+    if(ids.length===0){ checkPrincessAtBottom(); return; }
+
+    const hasPrincess = ids.some(id=>blocks[id].type==='princess');
+
+    let gained = Math.round(ids.length * 10 * scoreMulTotal);
+    if(ids.length>=5) gained += 25;
+    if(ids.length>=8) gained += 40;
+    score += gained;
+    updateHud();
+    updateLevelAndWeapons();
+    if(cascadeDepth>0) showToast('🔥 콤보 x'+(cascadeDepth+1)+'! +'+gained);
+
+    const particleKind = particleKindOverride || (cascadeDepth>0 ? 'bone' : (currentWeapon().id==='chainsaw' ? 'spark' : 'bone'));
+
+    for(const id of ids){
+      const b = blocks[id]; if(!b) continue;
+      const c = blockCenter(b);
+      spawnParticles(c, particleKind, particleKind==='fire' ? 16 : (particleKind==='spark' ? 13 : 11));
+      b.el.classList.add('destroying');
+    }
+
+    if(hasPrincess){
+      triggerPrincessHurtPenalty(); // 게임은 계속 진행되고, 화면만 잠깐 가려짐
+    }
+
+    setTimeout(()=>{
+      for(const id of ids){
+        const b = blocks[id]; if(!b) continue;
+        board[b.row][b.col] = null;
+        b.el.remove();
+        delete blocks[id];
+      }
+      applyGravityAndRefill();
+
+      setTimeout(()=>{
+        if(state!=='playing') return;
+        const nextMatches = scanAllMatches();
+        if(nextMatches.size>0){
+          destroyAndCascade(nextMatches, Math.min(2.2, 1 + (cascadeDepth+1)*0.3), cascadeDepth+1);
+        } else {
+          checkPrincessAtBottom();
+        }
+      }, 340);
+    }, 210);
+  }
+
+  function scanAllMatches(){
+    const found = new Set();
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      if(!board[r][c]) continue;
+      findRunsAt(r,c).forEach(run=> runCells(run).forEach(id=>{ if(id) found.add(id); }));
+    }
+    return found;
+  }
+
+  function applyGravityAndRefill(){
+    for(let c=0;c<COLS;c++){
+      const stack = [];
+      for(let r=0;r<ROWS;r++){
+        const id = board[r][c];
+        if(id && blocks[id]) stack.push(id);
+        board[r][c] = null;
+      }
+      const emptyCount = ROWS - stack.length;
+      for(let i=0;i<stack.length;i++){
+        const id = stack[i];
+        const newRow = emptyCount + i;
+        const b = blocks[id];
+        b.row = newRow; b.col = c;
+        board[newRow][c] = id;
+        positionBlock(b);
+      }
+      for(let i=0;i<emptyCount;i++){
+        const newRow = i;
+        const type = randomBlockType();
+        const spawnAboveOffset = emptyCount - i;
+        const b = createBlock(type, newRow, c, spawnAboveOffset);
+        board[newRow][c] = b.id;
+      }
+    }
+  }
+
+  /* ---------------- 화염방사기 (일회성 스킬 + 쿨다운) ---------------- */
+  function triggerFlamethrower(centerBlock){
+    const r0=centerBlock.row, c0=centerBlock.col;
+    const ids = new Set();
+    for(let r=r0-FLAME_RADIUS; r<=r0+FLAME_RADIUS; r++){
+      for(let c=c0-FLAME_RADIUS; c<=c0+FLAME_RADIUS; c++){
+        if(!inBounds(r,c)) continue;
+        const id = board[r][c];
+        // 공주 블록은 화염방사기의 방어막으로 보호되어 대상에서 제외됨
+        if(id && blocks[id] && blocks[id].type!=='princess') ids.add(id);
+      }
+    }
+
+    flamethrowerState.armed = false;
+    boardWrap.classList.remove('targeting');
+    flamethrowerState.cooldownLeft = FLAME_COOLDOWN_MS;
+    lastCooldownSecRendered = -1;
+    renderWeaponBar();
+
+    if(ids.size===0){ showToast('🔥 근처에 태울 좀비가 없어요...'); return; }
+    showToast('🔥 화염방사기 발사! ('+ids.size+'마리 제거)');
+    destroyAndCascade(ids, 1.3, 0, 'fire');
+  }
+
+  /* ---------------- 공주 구출 / 게임오버 ---------------- */
+  function checkPrincessAtBottom(){
+    for(let c=0;c<COLS;c++){
+      const id = board[ROWS-1][c];
+      if(id && blocks[id] && blocks[id].type==='princess') rescuePrincess(blocks[id]);
+    }
+  }
+
+  function rescuePrincess(b){
+    score += RESCUE_BONUS;
+    timePower = TIME_MAX; // 공주 구출 보상: Power를 완전히 채워줌
+    renderTimer();
+    updateHud();
+    showToast('👑 공주님 구출 성공! +'+RESCUE_BONUS+' / Power 완충!');
+    const c = blockCenter(b);
+    // 구출은 어려운 만큼 확실히 화려하게: 큰 파티클 + 보드 전체 골드 플래시
+    spawnParticles(c, 'gold', 34);
+    spawnShockwave(c, 'gold');
+    rescueFlashEl.classList.remove('show'); void rescueFlashEl.offsetHeight;
+    rescueFlashEl.classList.add('show');
+    b.el.classList.add('rescued');
+    setTimeout(()=>{
+      board[b.row][b.col] = null;
+      b.el.remove();
+      delete blocks[b.id];
+      applyGravityAndRefill();
+    }, 420);
+  }
+
+  function triggerGameOver(reason){
+    if(state !== 'playing') return;
+    state = 'gameover';
+    cancelAnimationFrame(rafId);
+
+    let reasonText = '시간이 다 되어버렸어요... 좀비들이 너무 많았네요.';
+    if(reason==='princess_drain') reasonText = '공주님을 자꾸 다치게 해서 Power가 다 떨어졌어요...';
+    $('#gameover-reason').textContent = reasonText;
+    $('#final-score').textContent = score;
+
+    const result = submitScore(score);
+    renderRanking(result);
+
+    switchScreen('gameover');
+  }
+
+  function renderRanking(result){
+    const listEl = $('#ranking-list');
+    listEl.innerHTML = '';
+    result.top.forEach((entry, idx)=>{
+      const li = document.createElement('li');
+      const isMine = entry === result.entry;
+      li.className = 'rank-row' + (isMine ? ' mine' : '');
+      li.innerHTML = '<span class="rank-num">'+(idx+1)+'위</span><span class="rank-score">'+entry.score+'점</span>';
+      listEl.appendChild(li);
+    });
+    const myRankEl = $('#my-rank');
+    if(result.rank <= result.top.length){
+      myRankEl.textContent = '이번 판이 상위 '+result.rank+'위에 올랐어요! 🎉';
+    } else {
+      myRankEl.textContent = '이번 판 순위: '+result.rank+'위 (총 '+result.totalCount+'판 중)';
+    }
+  }
+
+  /* ---------------- 레벨 / HUD ---------------- */
+  function updateLevelAndWeapons(){
+    const newLevel = 1 + Math.floor(score / LEVEL_UP_SCORE);
+    if(newLevel > level){
+      level = newLevel;
+      const justUnlocked = WEAPONS.find(w=>w.unlockLevel===level);
+      if(justUnlocked){
+        playWeaponUnlockAnimation(justUnlocked);
+      } else {
+        renderWeaponBar();
+        showToast('🎉 레벨 '+level+' 달성! 좀비가 더 빨라져요');
+      }
+    }
+    updateHud();
+  }
+
+  // 새 무기 해금 시: 화면 중앙에 큰 아이콘이 나타났다가 무기 슬롯 자리로 날아가서 쏙 들어가는 연출
+  function playWeaponUnlockAnimation(weapon){
+    renderWeaponBar(); // 슬롯을 먼저 그려서 목표 좌표를 계산할 수 있게 함
+    const slotEl = weaponBarEl.querySelector('[data-weapon-id="'+weapon.id+'"]');
+    showToast('🎉 레벨 '+level+'! 새 무기 해금: '+weapon.name);
+    if(!slotEl) return;
+
+    const targetRect = slotEl.getBoundingClientRect();
+    const gameRect = gameScreen.getBoundingClientRect();
+    const startX = gameRect.left + gameRect.width/2;
+    const startY = gameRect.top + gameRect.height*0.4;
+
+    const flyEl = document.createElement('div');
+    flyEl.className = 'weapon-unlock-fly';
+    flyEl.textContent = weapon.icon;
+    flyEl.style.left = startX + 'px';
+    flyEl.style.top = startY + 'px';
+    document.body.appendChild(flyEl);
+
+    requestAnimationFrame(()=>{
+      const endX = targetRect.left + targetRect.width/2;
+      const endY = targetRect.top + targetRect.height/2;
+      flyEl.style.setProperty('--dx', (endX-startX)+'px');
+      flyEl.style.setProperty('--dy', (endY-startY)+'px');
+      flyEl.classList.add('fly');
+    });
+
+    setTimeout(()=>{
+      flyEl.remove();
+      slotEl.classList.add('just-unlocked');
+      setTimeout(()=>slotEl.classList.remove('just-unlocked'), 650);
+    }, 980);
+  }
+
+  function updateHud(){ hudLevel.textContent = level; hudScore.textContent = score; }
+
+  /* ---------------- 타이머(난이도) + 화염방사기 쿨다운 루프 ---------------- */
+  function tickLoop(ts){
+    if(state !== 'playing') return;
+    if(lastFrameTs==null) lastFrameTs = ts;
+    const dt = Math.min(0.05, (ts - lastFrameTs)/1000);
+    lastFrameTs = ts;
+
+    const depletionRate = TIME_BASE_DEPLETION + (level-1)*TIME_DEPLETION_PER_LEVEL;
+    timePower -= depletionRate * dt;
+    if(timePower <= 0){
+      timePower = 0; renderTimer(); triggerGameOver('timeout'); return;
+    }
+    renderTimer();
+
+    if(flamethrowerState.cooldownLeft>0){
+      flamethrowerState.cooldownLeft = Math.max(0, flamethrowerState.cooldownLeft - dt*1000);
+      const sec = Math.ceil(flamethrowerState.cooldownLeft/1000);
+      if(sec !== lastCooldownSecRendered){
+        lastCooldownSecRendered = sec;
+        renderWeaponBar();
+      }
+    }
+
+    rafId = requestAnimationFrame(tickLoop);
+  }
+
+  function renderTimer(){
+    const pct = Math.max(0, Math.min(100, timePower));
+    timerFill.style.width = pct + '%';
+    if(pct < 20) timerFill.style.background = 'linear-gradient(90deg,#c23553,#ff6b7a)';
+    else if(pct < 50) timerFill.style.background = 'linear-gradient(90deg,#e0a33b,#ffd76a)';
+    else timerFill.style.background = 'linear-gradient(90deg, var(--accent-glow), var(--accent-glow-2))';
+  }
+
+  /* ---------------- 무기 바 ---------------- */
+  function renderWeaponBar(){
+    weaponBarEl.innerHTML = '';
+    for(const w of WEAPONS){
+      const unlocked = w.unlockLevel <= level;
+      const slot = document.createElement('div');
+      let cls = 'weapon-slot';
+      if(!unlocked) cls += ' locked';
+      if(w.id!=='flamethrower' && w.id===currentWeaponId) cls += ' active';
+      if(w.id==='flamethrower' && unlocked){
+        if(flamethrowerState.armed) cls += ' arming';
+        else if(flamethrowerState.cooldownLeft>0) cls += ' cooling';
+      }
+      slot.className = cls;
+      slot.dataset.weaponId = w.id;
+
+      let nameHtml;
+      if(w.id==='flamethrower' && unlocked && flamethrowerState.cooldownLeft>0){
+        nameHtml = Math.ceil(flamethrowerState.cooldownLeft/1000)+'초';
+      } else {
+        nameHtml = w.name;
+      }
+      slot.innerHTML = '<span class="icon">'+w.icon+'</span><span class="name">'+nameHtml+'</span>' + (unlocked? '' : '<span class="lock">🔒</span>');
+
+      if(unlocked){
+        if(w.id==='flamethrower'){
+          if(flamethrowerState.cooldownLeft<=0){
+            slot.addEventListener('click', ()=>{
+              flamethrowerState.armed = !flamethrowerState.armed;
+              boardWrap.classList.toggle('targeting', flamethrowerState.armed);
+              renderWeaponBar();
+              if(flamethrowerState.armed) showToast('🔥 조준 중... 폭파할 좀비를 탭하세요');
+            });
+          }
+        } else {
+          slot.addEventListener('click', ()=>{ currentWeaponId = w.id; renderWeaponBar(); });
+        }
+      }
+      weaponBarEl.appendChild(slot);
+    }
+  }
+
+  /* ---------------- 화면 전환 / 초기화 ---------------- */
+  function switchScreen(name){
+    startScreen.classList.toggle('active', name==='start');
+    gameoverScreen.classList.toggle('active', name==='gameover');
+    gameScreen.classList.toggle('active', name==='playing');
+  }
+
+  function startGame(){
+    score=0; level=1; timePower=TIME_MAX; currentWeaponId='scythe';
+    flamethrowerState = { armed:false, cooldownLeft:0 };
+    lastCooldownSecRendered = -1;
+    inputLocked = false;
+    boardWrap.classList.remove('targeting');
+    princessHurtOverlay.classList.remove('show');
+    rescueFlashEl.classList.remove('show');
+    clearBoardDom();
+    state='playing';
+    switchScreen('playing');
+    updateHud();
+    renderWeaponBar();
+    renderTimer();
+
+    requestAnimationFrame(()=>{
+      recalcCellSize();
+      buildInitialBoard();
+      lastFrameTs = null;
+      rafId = requestAnimationFrame(tickLoop);
+    });
+  }
+
+  function goHome(){ state='start'; switchScreen('start'); }
+
+  $('#btn-start').addEventListener('click', startGame);
+  $('#btn-restart').addEventListener('click', startGame);
+  $('#btn-home').addEventListener('click', goHome);
+
+  boardWrap.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+
+  let resizeTimer=null;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(recalcCellSize, 120);
+  });
+
+})();
+</script>
+</body>
+</html>
