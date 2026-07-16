@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>좀비 슬래시: 공주 구출 작전</title>
+<title>사각사각 몬스터</title>
 <style>
 :root{
   --bg-deep:#120821;
@@ -60,6 +60,15 @@ html,body{
     radial-gradient(1.5px 1.5px at 85% 20%, rgba(255,255,255,.1), transparent);
 }
 
+#mute-btn{
+  position:absolute; top:10px; right:10px; z-index:100;
+  width:48px; height:48px; border-radius:50%;
+  background:rgba(20,10,35,.75); border:1.5px solid var(--line);
+  color:var(--text-light); font-size:24px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.4);
+}
+
 .screen{
   position:absolute; inset:0; z-index:5;
   display:none; flex-direction:column; align-items:center; justify-content:center;
@@ -111,6 +120,21 @@ html,body{
 
 #game-screen{ position:relative; padding:14px 14px 10px; z-index:1; display:none; flex-direction:column; }
 #game-screen.active{ display:flex; }
+
+/* 안내판(HUD와 게임 보드 사이 고정 배치): 게임판을 가리지 않으면서도
+   플레이 중 눈에 잘 띄도록 글자를 크고 굵게 키움 */
+#guide-bubble{
+  position:relative; z-index:3; margin-bottom:9px;
+  background:rgba(15,7,28,.92);
+  border:1.5px solid var(--gold); border-radius:14px;
+  padding:10px 14px; box-shadow:0 6px 16px rgba(0,0,0,.4), 0 0 14px rgba(240,200,105,.2);
+  font-size:15.5px; font-weight:700; line-height:1.4; color:var(--text-light); text-align:center;
+}
+#guide-bubble.pulse{ animation:guide-pulse .4s ease-out; }
+@keyframes guide-pulse{
+  0%{ transform:scale(.94); box-shadow:0 0 0 3px rgba(156,230,107,.55), 0 6px 16px rgba(0,0,0,.4); }
+  100%{ transform:scale(1); box-shadow:0 6px 16px rgba(0,0,0,.4), 0 0 14px rgba(240,200,105,.2); }
+}
 
 #hud{ display:flex; align-items:center; gap:10px; margin-bottom:10px; z-index:2; }
 .hud-badge{
@@ -205,7 +229,7 @@ html,body{
 }
 
 .face{ position:relative; width:58%; height:46%; margin-top:6%; }
-/* 좀비 계열은 눈/입뿐 아니라 몸 전체(얼굴 파트)가 살짝 좌우로 까딱거림 -> 순간적으로 헷갈리게 */
+/* 몬스터 계열은 눈/입뿐 아니라 몸 전체(얼굴 파트)가 살짝 좌우로 까딱거림 -> 순간적으로 헷갈리게 */
 .block:not(.princess) .face{ animation: body-wobble 2.3s ease-in-out infinite; }
 @keyframes body-wobble{
   0%,100%{ transform:translateX(-3px) rotate(-3deg); }
@@ -272,15 +296,24 @@ html,body{
   0%,100%{ box-shadow:inset 0 -5px 0 rgba(0,0,0,.12), inset 0 3px 0 rgba(255,255,255,.4), 0 0 10px 2px rgba(255,214,140,.55), 0 4px 10px rgba(0,0,0,.4); }
   50%{ box-shadow:inset 0 -5px 0 rgba(0,0,0,.12), inset 0 3px 0 rgba(255,255,255,.4), 0 0 26px 9px rgba(255,214,140,.95), 0 4px 10px rgba(0,0,0,.4); }
 }
+.block.princess .face{ margin-top:26%; height:36%; }
 .block.princess .eye{ background:#5c3a1a; animation:eye-sparkle 1.6s ease-in-out infinite; }
 .block.princess .mouth{ width:22%; height:10%; border-radius:50%; background:#e88; opacity:.7; }
-@keyframes eye-sparkle{ 0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0);} 50%{ box-shadow:0 0 6px 2px rgba(255,255,255,.9);} }
-.crown-emoji{
-  position:absolute; top:-42%; left:50%; transform:translateX(-50%);
-  font-size:20px; line-height:1; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
-  animation:crown-bob 1.4s ease-in-out infinite;
+/* 볼터치: 좀 더 공주답게 보이도록 */
+.block.princess .face::before, .block.princess .face::after{
+  content:''; position:absolute; bottom:2%; width:15%; aspect-ratio:1/1; border-radius:50%;
+  background:rgba(255,130,165,.55); filter:blur(1px);
 }
-@keyframes crown-bob{ 0%,100%{ transform:translateX(-50%) translateY(0) rotate(-4deg);} 50%{ transform:translateX(-50%) translateY(-3px) rotate(4deg);} }
+.block.princess .face::before{ left:-10%; }
+.block.princess .face::after{ right:-10%; }
+@keyframes eye-sparkle{ 0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0);} 50%{ box-shadow:0 0 6px 2px rgba(255,255,255,.9);} }
+/* 왕관: 블록 영역 안쪽 상단에 배치해서 보드 경계에 잘리지 않도록 함 */
+.crown-emoji{
+  position:absolute; top:3%; left:50%; transform:translateX(-50%);
+  font-size:24px; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(255,214,140,.8));
+  animation:crown-bob 1.4s ease-in-out infinite; z-index:2;
+}
+@keyframes crown-bob{ 0%,100%{ transform:translateX(-50%) translateY(0) rotate(-4deg);} 50%{ transform:translateX(-50%) translateY(-2px) rotate(4deg);} }
 .sparkle{
   position:absolute; width:8px; height:8px; background:var(--gold-2);
   clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0 50%,37% 38%);
@@ -303,14 +336,26 @@ html,body{
 
 .particle{ position:absolute; pointer-events:none; will-change:transform,opacity; margin:-8px 0 0 -8px; }
 .particle.bone{
-  width:8px; height:18px; background:linear-gradient(#fffef6,#f4ecd8); border-radius:3px;
+  width:5px; height:14px; background:linear-gradient(#fffef6,#f0e6cc); border-radius:2px;
   box-shadow:0 0 4px rgba(0,0,0,.45);
   animation:particle-fly .68s cubic-bezier(.22,.75,.28,1) forwards;
 }
+/* 뼈다귀 양 끝의 동그란 관절 부분(::before/::after)으로 진짜 뼈 모양을 표현 */
+.particle.bone::before, .particle.bone::after{
+  content:''; position:absolute; left:50%; width:9px; height:9px; border-radius:50%;
+  background:inherit; transform:translateX(-50%); box-shadow:0 0 3px rgba(0,0,0,.4);
+}
+.particle.bone::before{ top:-4.5px; }
+.particle.bone::after{ bottom:-4.5px; }
 .particle.fire{
   width:12px; height:12px; border-radius:50%;
   background:radial-gradient(circle, #ffe08a, #ff7a2e 60%, transparent 75%);
   animation:particle-fly .55s ease-out forwards;
+}
+.particle.ash{
+  width:6px; height:6px; border-radius:50%;
+  background:radial-gradient(circle, #8a8a8a, #2c2c2c 70%, transparent 90%);
+  animation:particle-fly .95s ease-out forwards;
 }
 .particle.spark{
   width:4px; height:16px; background:linear-gradient(#fff8c9, #ffcf3b); border-radius:2px;
@@ -325,6 +370,40 @@ html,body{
   0%{ transform:translate(0,0) scale(1) rotate(0deg); opacity:1; }
   42%{ transform:translate(var(--tx-mid),var(--ty-mid)) scale(calc(var(--scale) * 1.05)) rotate(calc(var(--rot) * .5)); opacity:1; }
   100%{ transform:translate(var(--tx),var(--ty)) scale(calc(var(--scale) * .12)) rotate(var(--rot)); opacity:0; }
+}
+
+/* 화염방사기: 몬스터가 불타서 재가 되어 사라지는 연출 */
+.block.burning{ animation:burn-away .6s ease-in forwards; z-index:6; }
+@keyframes burn-away{
+  0%{ filter:brightness(1) saturate(1); opacity:1; transform:scale(1) rotate(0deg); }
+  35%{ filter:brightness(.65) saturate(.35) contrast(1.3); opacity:1; transform:scale(1.06) rotate(-3deg); }
+  70%{ filter:brightness(.25) saturate(0) contrast(1.8); opacity:.65; transform:scale(.8) rotate(6deg); }
+  100%{ filter:brightness(.05) saturate(0); opacity:0; transform:scale(.12) rotate(14deg); }
+}
+
+/* 콤보 팝업 */
+.combo-popup{
+  position:absolute; left:50%; top:36%; z-index:30; pointer-events:none;
+  font-family:'Cinzel',serif; font-weight:800; text-align:center; white-space:nowrap;
+  text-shadow:0 0 10px currentColor, 0 3px 6px rgba(0,0,0,.6);
+  opacity:0; transform:translate(-50%,-50%) scale(.2) rotate(-12deg);
+}
+.combo-popup.show{ animation:combo-pop .8s cubic-bezier(.34,1.56,.64,1) forwards; }
+.combo-sub{ font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:700; margin-top:2px; color:var(--text-light); text-shadow:0 2px 4px rgba(0,0,0,.6); }
+@keyframes combo-pop{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(.2) rotate(-16deg); }
+  22%{ opacity:1; transform:translate(-50%,-50%) scale(1.3) rotate(7deg); }
+  45%{ opacity:1; transform:translate(-50%,-52%) scale(1) rotate(-3deg); }
+  75%{ opacity:1; transform:translate(-50%,-62%) scale(1.05) rotate(0deg); }
+  100%{ opacity:0; transform:translate(-50%,-85%) scale(.92) rotate(0deg); }
+}
+#board-wrap.shake{ animation:board-shake .35s ease; }
+@keyframes board-shake{
+  0%,100%{ transform:translate(0,0); }
+  20%{ transform:translate(-5px,3px); }
+  40%{ transform:translate(5px,-3px); }
+  60%{ transform:translate(-4px,-2px); }
+  80%{ transform:translate(4px,2px); }
 }
 
 .shockwave{
@@ -380,6 +459,44 @@ html,body{
   100%{ transform:translateY(24px); opacity:0; }
 }
 
+/* 공주 구출 성공 연출: 공주가 크게 나타나 하트를 날려줌 */
+#rescue-kiss-overlay{
+  position:absolute; inset:0; z-index:60;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:radial-gradient(circle, rgba(255,214,140,.28), rgba(10,4,22,.88) 70%);
+  opacity:0; pointer-events:none; transition:opacity .25s ease;
+}
+#rescue-kiss-overlay.show{ opacity:1; animation:kiss-overlay-pop .5s ease-out; }
+@keyframes kiss-overlay-pop{
+  0%{ transform:scale(.8); }
+  50%{ transform:scale(1.05); }
+  100%{ transform:scale(1); }
+}
+.kiss-crown{ font-size:64px; animation:crown-bob 1s ease-in-out infinite; filter:drop-shadow(0 0 20px rgba(255,214,140,.8)); }
+.kiss-face{ font-size:84px; margin-top:-6px; animation:kiss-bounce .6s ease-in-out infinite; }
+@keyframes kiss-bounce{
+  0%,100%{ transform:scale(1) rotate(-4deg); }
+  50%{ transform:scale(1.1) rotate(4deg); }
+}
+.kiss-text{
+  margin-top:10px; font-family:'Cinzel',serif; font-weight:700; font-size:17px;
+  color:var(--gold-2); text-shadow:0 0 12px rgba(240,200,105,.7); text-align:center;
+}
+.kiss-hearts{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.kiss-hearts span{
+  position:absolute; bottom:38%; font-size:26px; opacity:0;
+  animation:heart-fly 1.3s ease-out infinite;
+}
+.kiss-hearts span:nth-child(1){ left:32%; animation-delay:0s; }
+.kiss-hearts span:nth-child(2){ left:48%; animation-delay:.2s; }
+.kiss-hearts span:nth-child(3){ left:58%; animation-delay:.4s; }
+.kiss-hearts span:nth-child(4){ left:42%; animation-delay:.6s; }
+@keyframes heart-fly{
+  0%{ transform:translateY(0) scale(.4) rotate(-8deg); opacity:0; }
+  15%{ opacity:1; }
+  100%{ transform:translateY(-160px) scale(1.15) rotate(10deg); opacity:0; }
+}
+
 /* 새 무기 해금: 큰 아이콘이 화면 중앙에서 무기 슬롯 자리로 날아가는 연출 */
 .weapon-unlock-fly{
   position:fixed; z-index:200; left:0; top:0;
@@ -420,6 +537,13 @@ html,body{
 .weapon-slot.cooling{ opacity:.5; cursor:not-allowed; }
 .weapon-slot.cooling .name{ color:var(--text-dim); }
 
+/* 현재 선택된(또는 조준 중인) 무기의 설명 */
+#weapon-desc{
+  margin-top:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:10px 14px; font-size:14.5px; line-height:1.55; color:var(--text-light); text-align:center;
+}
+#weapon-desc b{ color:var(--gold-2); font-size:15px; }
+
 #gameover-screen .emoji-hero{ font-size:52px; }
 #final-score{
   font-family:'Cinzel',serif; font-weight:800; font-size:38px; color:var(--gold-2);
@@ -436,6 +560,7 @@ html,body{
 .rank-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); padding:4px 9px; border-radius:8px; background:rgba(255,255,255,.03); }
 .rank-row.mine{ background:rgba(240,200,105,.18); border:1px solid var(--gold); color:var(--gold-2); font-weight:700; }
 .rank-num{ font-weight:800; }
+.rank-level{ font-size:11px; opacity:.75; font-weight:600; }
 #my-rank{ margin:9px 0 0; font-size:12px; color:var(--text-dim); }
 
 @media (max-width:360px){
@@ -446,13 +571,15 @@ html,body{
 </head>
 <body>
 <div id="app">
+  <button id="mute-btn" aria-label="소리 켜기/끄기">🔊</button>
+
 
   <div id="start-screen" class="screen active">
     <div class="emoji-hero">🏰🧟</div>
-    <h1 class="game-title">좀비 슬래시</h1>
+    <h1 class="game-title">사각사각 몬스터</h1>
     <p class="game-subtitle">공주 구출 작전</p>
     <p class="flavor-text">
-      좀비 블록을 <b>상하좌우로 밀어서</b> 같은 색 3개 이상을 맞추면 사라져요!<br>
+      몬스터 블록을 <b>상하좌우로 밀어서</b> 같은 색 3개 이상을 맞추면 사라져요!<br>
       <b>👑 공주님</b>이 매치에 휘말리면 Power가 크게 줄어들어요.
       Power가 0이 되면 게임 오버, 맨 아래 줄까지 무사히 내려오면 구출 성공!
     </p>
@@ -465,6 +592,8 @@ html,body{
       <div class="hud-badge"><span class="label">SCORE</span><span class="value" id="hud-score">0</span></div>
       <div id="timer-wrap"><div id="timer-fill"></div><div id="timer-label">POWER</div></div>
     </div>
+
+    <div id="guide-bubble"><span id="guide-text">👑 공주가 몬스터들에게 갇혀있어요! 서둘러 구출해주세요.</span></div>
 
     <div id="board-wrap">
       <div id="board"></div>
@@ -480,7 +609,15 @@ html,body{
       <p class="hurt-text">앗! 공주님이 다쳤어요...</p>
     </div>
 
+    <div id="rescue-kiss-overlay">
+      <div class="kiss-crown">👑</div>
+      <div class="kiss-face">😘</div>
+      <div class="kiss-hearts"><span>💗</span><span>💕</span><span>💖</span><span>💗</span></div>
+      <p class="kiss-text">공주님을 구출했어요!</p>
+    </div>
+
     <div id="weapon-bar"></div>
+    <p id="weapon-desc"></p>
   </div>
 
   <div id="gameover-screen" class="screen">
@@ -516,9 +653,12 @@ html,body{
   const TIME_MAX = 100;
   const TIME_BASE_DEPLETION = 1.0;         // 초당 Power 감소량 (더욱 느리게)
   const TIME_DEPLETION_PER_LEVEL = 0.22;   // 레벨당 추가 감소량 (더욱 완만하게)
-  const TIME_RESTORE_PER_BLOCK = 4.5;      // 좀비를 자를 때마다 채워지는 Power (보상 강화)
+  const TIME_RESTORE_PER_BLOCK = 3.6;      // 몬스터를 자를 때마다 채워지는 Power (미세 하향 조정)
   const RESCUE_BONUS = 100;
   const PRINCESS_HURT_LOCK_MS = 1500;      // 공주가 다쳤을 때 화면을 가리는 시간(밀리초)
+  const PRINCESS_HIT_PENALTY = 16;         // 공주가 다쳤을 때 추가로 깎이는 Power
+  const RESCUE_KISS_VISIBLE_MS = 1300;     // 구출 연출(하트 날리기)이 화면에 보이는 시간
+  const RESCUE_POWER_FREEZE_EXTRA_MS = 1000; // 연출이 끝난 뒤에도 Power를 추가로 묶어두는 시간
 
   const FLAME_RADIUS = 2;                  // 화염방사기 폭발 반경(체비셰프 거리)
   const FLAME_COOLDOWN_MS = 15000;         // 화염방사기 재사용 대기시간
@@ -528,11 +668,29 @@ html,body{
   const RANKING_DISPLAY_MAX = 5;
 
   const WEAPONS = [
-    { id:'scythe',      name:'낫',       icon:'🔪', unlockLevel:1, scoreMul:1.0 },
-    { id:'sword',       name:'검',       icon:'⚔️', unlockLevel:2, scoreMul:1.0 },
-    { id:'chainsaw',    name:'전기톱',    icon:'🪚', unlockLevel:3, scoreMul:1.5 },
-    { id:'flamethrower',name:'화염방사기',icon:'🔥', unlockLevel:4 },
+    { id:'scythe',      name:'낫',       icon:'🔪', unlockLevel:1,  scoreMul:1.0 },
+    { id:'sword',       name:'검',       icon:'⚔️', unlockLevel:11, scoreMul:1.0 },
+    { id:'chainsaw',    name:'전기톱',    icon:'🪚', unlockLevel:21, scoreMul:1.5 },
+    { id:'flamethrower',name:'화염방사기',icon:'🔥', unlockLevel:31 },
   ];
+
+  const WEAPON_DESC = {
+    scythe: '기본 무기예요. 몬스터들을 하나하나 정확히 찾아내어 잘라낼 수 있어요.',
+    sword: '공격 범위가 늘어나요! 베어버린 줄에 있는 모든 몬스터를 한 번에 잘라낼 수 있어요.',
+    chainsaw: '공격 범위가 십자(+) 모양으로 늘어나서, 많은 몬스터들을 한 번에 해치울 수 있어요.',
+    flamethrower: '아주 넓은 범위의 몬스터를 한꺼번에 태워버리는 강력한 스킬이에요. 사용 중엔 공주님께 보호막이 생겨서 절대 다치지 않아요!'
+  };
+
+  const GUIDE_MESSAGES = {
+    start: '👑 공주가 몬스터들에게 갇혀있어요! 서둘러 구출해주세요.',
+    howto: '💡 블록을 밀어서 같은 색 3개 이상을 맞추면 사라져요!',
+    princessSpawn: '✨ 공주님을 발견했어요! 맨 아래 줄까지 무사히 내려보내주세요.',
+    rescued: '🎉 공주님을 구출했어요! Power가 가득 채워졌어요!',
+    hurt: '😢 앗, 공주님이 다쳤어요... 매치할 때 조심해주세요.',
+    lowPower: '⏰ Power가 얼마 안 남았어요! 서둘러 몬스터를 잘라주세요!',
+    flamethrowerReady: '🔥 화염방사기 재사용 준비 완료! 강력한 한 방을 노려보세요.',
+    weaponUnlocked: (name)=> '🗡️ 새로운 무기 "'+name+'"이(가) 열렸어요! 하단에서 사용해보세요.'
+  };
 
   /* ---------------- 상태 ---------------- */
   let state = 'start';
@@ -552,10 +710,14 @@ html,body{
   let dragStartClient = null;
   let dragResolved = false;
   let inputLocked = false; // 공주 피해 연출 중에는 입력을 잠깐 막는다
+  let powerFreezeUntil = 0; // 이 시각까지는 Power가 깎이지 않고 고정된다 (공주 구출 직후)
 
   let rafId = null;
   let lastFrameTs = null;
   let memoryRankings = []; // localStorage 사용 불가 시 세션 내 임시 저장소
+  let guideLockUntil = 0;         // 가이드 말풍선 우선순위 잠금 시각
+  let lowPowerWarned = false;     // Power 부족 경고 중복 방지
+  let prevFlameCooldownLeft = 0;  // 화염방사기 재충전 완료 감지용
 
   /* ---------------- DOM 참조 ---------------- */
   const $ = (sel)=>document.querySelector(sel);
@@ -566,12 +728,260 @@ html,body{
   const boardEl   = $('#board');
   const particleLayer = $('#particle-layer');
   const weaponBarEl = $('#weapon-bar');
+  const weaponDescEl = $('#weapon-desc');
   const hudLevel = $('#hud-level');
   const hudScore = $('#hud-score');
   const timerFill = $('#timer-fill');
   const toastEl = $('#toast');
   const princessHurtOverlay = $('#princess-hurt-overlay');
+  const rescueKissOverlay = $('#rescue-kiss-overlay');
   const rescueFlashEl = $('#rescue-flash');
+  const guideBubble = $('#guide-bubble');
+  const guideTextEl = $('#guide-text');
+  const muteBtn = $('#mute-btn');
+
+  /* =====================================================================
+     오디오 엔진: 외부 음원 파일 없이 Web Audio API로 배경음악/효과음을 직접 합성한다.
+     (오프라인 단일 파일로 배포되므로 모든 사운드를 코드로 생성)
+     ===================================================================== */
+  let actx = null, masterGain = null, musicGain = null, sfxGain = null;
+  let audioMuted = false;
+  let musicToken = 0;
+  let musicTimeoutId = null;
+  let idleTauntTimer = null;
+
+  function ensureAudio(){
+    if(!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      actx = new AC();
+      masterGain = actx.createGain(); masterGain.gain.value = audioMuted ? 0 : 1; masterGain.connect(actx.destination);
+      musicGain = actx.createGain(); musicGain.gain.value = 0.5; musicGain.connect(masterGain);
+      sfxGain = actx.createGain(); sfxGain.gain.value = 0.9; sfxGain.connect(masterGain);
+    }
+    if(actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+
+  function setAudioMuted(v){
+    audioMuted = v;
+    if(masterGain) masterGain.gain.setTargetAtTime(v?0:1, actx.currentTime, 0.05);
+    if(muteBtn) muteBtn.textContent = v ? '🔇' : '🔊';
+  }
+
+  function noiseBuffer(duration){
+    const c = ensureAudio(); if(!c) return null;
+    const size = Math.max(1, Math.floor(c.sampleRate*duration));
+    const buf = c.createBuffer(1, size, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<size;i++) d[i] = Math.random()*2-1;
+    return buf;
+  }
+
+  // 순수 오실레이터 톤(비명, 효과음, 멜로디에 사용)
+  function tone(o){
+    const c = ensureAudio(); if(!c) return;
+    const t0 = c.currentTime + (o.delay||0);
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(o.freq, t0);
+    if(o.freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(o.freqEnd,1), t0+o.dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(o.gain||0.2, t0+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+o.dur);
+    osc.connect(g); g.connect(o.bus||sfxGain);
+    osc.start(t0); osc.stop(t0+o.dur+0.03);
+  }
+
+  // 필터링된 화이트노이즈 버스트(타격음, 바람소리, 지지직 소리 등에 사용)
+  function noiseBurst(o){
+    const c = ensureAudio(); if(!c) return;
+    const t0 = c.currentTime + (o.delay||0);
+    const src = c.createBufferSource();
+    src.buffer = noiseBuffer(o.dur);
+    const filt = c.createBiquadFilter();
+    filt.type = o.filterType || 'bandpass';
+    filt.frequency.setValueAtTime(o.freq, t0);
+    if(o.freqEnd) filt.frequency.exponentialRampToValueAtTime(Math.max(o.freqEnd,50), t0+o.dur);
+    filt.Q.value = o.q!==undefined ? o.q : 1;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(o.gain||0.3, t0+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+o.dur);
+    src.connect(filt); filt.connect(g); g.connect(o.bus||sfxGain);
+    src.start(t0); src.stop(t0+o.dur+0.03);
+  }
+
+  /* ---- 무기 효과음 ---- */
+  function sfxScythe(){ // 사각
+    noiseBurst({dur:0.11, freq:3200, freqEnd:1700, gain:0.32, q:2.2});
+    noiseBurst({dur:0.08, freq:5200, freqEnd:2800, gain:0.16, q:3, delay:0.02});
+  }
+  function sfxSword(){ // 스엉~
+    tone({type:'sawtooth', freq:1300, freqEnd:400, dur:0.28, gain:0.14});
+    noiseBurst({dur:0.22, freq:4000, freqEnd:900, gain:0.2, q:1.4});
+  }
+  function sfxChainsaw(){ // 드르르르
+    const c = ensureAudio(); if(!c) return;
+    const t0 = c.currentTime;
+    const osc = c.createOscillator();
+    const lfo = c.createOscillator();
+    const lfoGain = c.createGain();
+    const g = c.createGain();
+    osc.type = 'sawtooth'; osc.frequency.value = 170;
+    lfo.type = 'square'; lfo.frequency.value = 26; lfoGain.gain.value = 55;
+    lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.2, t0+0.03);
+    g.gain.setValueAtTime(0.2, t0+0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+0.4);
+    osc.connect(g); g.connect(sfxGain);
+    osc.start(t0); lfo.start(t0);
+    osc.stop(t0+0.42); lfo.stop(t0+0.42);
+  }
+  function sfxFlamethrower(){ // 화르륵
+    noiseBurst({dur:0.4, freq:150, freqEnd:60, gain:0.36, filterType:'lowpass'});
+    noiseBurst({dur:0.5, freq:900, freqEnd:160, gain:0.28, q:0.7, filterType:'lowpass', delay:0.03});
+    noiseBurst({dur:0.3, freq:2600, freqEnd:600, gain:0.14, q:1, delay:0.08});
+  }
+
+  /* ---- 몬스터별 비명 소리 ---- */
+  function sfxScreamZombie(){    // 끄으윽… 컥
+    tone({type:'sawtooth', freq:180, freqEnd:85, dur:0.32, gain:0.16});
+    noiseBurst({dur:0.14, freq:450, freqEnd:180, gain:0.1, delay:0.28});
+  }
+  function sfxScreamFrank(){     // 으아아아아윽
+    tone({type:'square', freq:250, freqEnd:110, dur:0.48, gain:0.15});
+  }
+  function sfxScreamWitch(){     // 꺄아아악—
+    tone({type:'sawtooth', freq:1150, freqEnd:1850, dur:0.16, gain:0.15});
+    tone({type:'sawtooth', freq:1850, freqEnd:650, dur:0.26, gain:0.13, delay:0.15});
+  }
+  function sfxScreamMummy(){     // 스스스슥… 큭
+    noiseBurst({dur:0.26, freq:2500, freqEnd:1100, gain:0.13, q:2.5});
+    tone({type:'square', freq:150, freqEnd:95, dur:0.11, gain:0.11, delay:0.24});
+  }
+  function sfxScreamDracula(){   // 끄아아악!(치익—)
+    tone({type:'sawtooth', freq:680, freqEnd:1350, dur:0.15, gain:0.17});
+    noiseBurst({dur:0.2, freq:4500, freqEnd:2000, gain:0.13, q:3, delay:0.13});
+  }
+  const SCREAM_BY_TYPE = { zombie:sfxScreamZombie, frank:sfxScreamFrank, witch:sfxScreamWitch, mummy:sfxScreamMummy, dracula:sfxScreamDracula };
+
+  // 몬스터들이 대기 중 비웃거나 약올리는 웃음소리 (게임 진입 시 + 플레이 중 주기적으로)
+  function sfxTauntCackle(){
+    const base = 480 + Math.random()*260;
+    tone({type:'square', freq:base,      freqEnd:base*0.7,  dur:0.09, gain:0.09, delay:0});
+    tone({type:'square', freq:base*0.85, freqEnd:base*0.55, dur:0.09, gain:0.09, delay:0.11});
+    tone({type:'square', freq:base*0.7,  freqEnd:base*0.45, dur:0.11, gain:0.08, delay:0.22});
+  }
+
+  /* ---- 이벤트 효과음 ---- */
+  function sfxPrincessSpawn(){
+    tone({type:'sine', freq:660, freqEnd:880, dur:0.32, gain:0.18});
+    tone({type:'sine', freq:990, dur:0.24, gain:0.12, delay:0.12});
+  }
+  function sfxPrincessRescue(){
+    // 화려한 팡파르: 상승 아르페지오 + 옥타브 반짝임 + 반짝이는 노이즈 + 마무리 화음
+    const notes = [523.25,659.25,783.99,1046.5,1318.51];
+    notes.forEach((f,i)=> tone({type:'triangle', freq:f, dur:0.3, gain:0.24, delay:i*0.07}));
+    notes.forEach((f,i)=> tone({type:'sine', freq:f*2, dur:0.22, gain:0.09, delay:i*0.07+0.02}));
+    noiseBurst({dur:0.55, freq:5000, freqEnd:9500, gain:0.14, q:0.6, delay:0.05});
+    [783.99,1046.5,1318.51].forEach(f=> tone({type:'triangle', freq:f, dur:0.6, gain:0.17, delay:0.42}));
+  }
+  function sfxPrincessHurt(){
+    // 놀라서 비명을 지르는 듯한 급격한 하강음 + 낮은 충격음으로 좀 더 극적으로
+    tone({type:'sine', freq:760, freqEnd:200, dur:0.32, gain:0.24});
+    tone({type:'sawtooth', freq:360, freqEnd:85, dur:0.5, gain:0.17, delay:0.09});
+    noiseBurst({dur:0.32, freq:650, freqEnd:140, gain:0.2, q:0.8, delay:0.05});
+  }
+  function sfxWeaponUnlock(){
+    [392,523.25,659.25,783.99].forEach((f,i)=> tone({type:'square', freq:f, dur:0.16, gain:0.15, delay:i*0.09}));
+  }
+  function sfxCombo(comboNum){
+    const f = 500 + Math.min(comboNum,8)*70;
+    tone({type:'square', freq:f, freqEnd:f*1.4, dur:0.13, gain:0.14});
+  }
+  function sfxInvalidSwap(){
+    tone({type:'square', freq:180, freqEnd:105, dur:0.13, gain:0.14});
+  }
+  function sfxClick(){
+    tone({type:'square', freq:740, dur:0.045, gain:0.1});
+  }
+  function sfxCascadeBreak(){
+    tone({type:'sine', freq:900, freqEnd:1300, dur:0.12, gain:0.1});
+  }
+  function sfxGameOver(){
+    [440,392,349.23,261.63].forEach((f,i)=> tone({type:'sawtooth', freq:f, dur:0.4, gain:0.16, delay:i*0.22}));
+  }
+
+  /* ---- 배경음악(간단한 시퀀서로 짧은 멜로디를 반복 재생) ---- */
+  const TITLE_TRACK = {
+    tempo:104, type:'triangle',
+    notes:[ [220,1],[261.63,1],[329.63,1],[261.63,1], [220,1],[196,1],[220,2],
+            [329.63,1],[392,1],[440,1],[392,1], [329.63,1],[293.66,1],[329.63,2] ]
+  };
+  const GAMEPLAY_TRACK = {
+    tempo:140, type:'square',
+    notes:[ [220,0.5],[220,0.5],[261.63,0.5],[293.66,0.5], [329.63,0.5],[293.66,0.5],[261.63,0.5],[220,0.5],
+            [246.94,0.5],[246.94,0.5],[293.66,0.5],[329.63,0.5], [349.23,0.5],[329.63,0.5],[293.66,0.5],[246.94,0.5] ]
+  };
+  const GAMEOVER_TRACK = {
+    tempo:88, type:'triangle', loopOverride:false,
+    notes:[ [349.23,1],[293.66,1],[246.94,1],[196,2] ]
+  };
+
+  function stopMusic(){
+    musicToken++;
+    if(musicTimeoutId){ clearTimeout(musicTimeoutId); musicTimeoutId=null; }
+  }
+  function playMusic(track, loop){
+    const c = ensureAudio(); if(!c) return;
+    stopMusic();
+    const myToken = musicToken;
+    const beatSec = 60/track.tempo;
+    let i = 0;
+    (function step(){
+      if(myToken !== musicToken) return;
+      const note = track.notes[i];
+      const dur = note[1]*beatSec*0.92;
+      if(note[0]>0){
+        tone({type:track.type, freq:note[0], dur, gain:0.11, bus:musicGain});
+        tone({type:'sine', freq:note[0]/2, dur:dur*0.9, gain:0.045, bus:musicGain});
+      }
+      i++;
+      if(i>=track.notes.length){
+        if(loop) i=0; else return;
+      }
+      musicTimeoutId = setTimeout(step, note[1]*beatSec*1000);
+    })();
+  }
+
+  function scheduleIdleTaunt(){
+    const delay = 6500 + Math.random()*6000;
+    idleTauntTimer = setTimeout(()=>{
+      if(state==='playing' && !inputLocked) sfxTauntCackle();
+      scheduleIdleTaunt();
+    }, delay);
+  }
+  function stopIdleTaunt(){
+    if(idleTauntTimer){ clearTimeout(idleTauntTimer); idleTauntTimer=null; }
+  }
+
+  // 첫 사용자 입력에서 오디오 컨텍스트를 활성화(브라우저 자동재생 정책 대응)
+  function unlockAudioOnce(){
+    ensureAudio();
+    if(state==='start') playMusic(TITLE_TRACK, true);
+    document.removeEventListener('pointerdown', unlockAudioOnce);
+  }
+  document.addEventListener('pointerdown', unlockAudioOnce, {once:true});
+
+  if(muteBtn){
+    muteBtn.addEventListener('click', ()=>{
+      ensureAudio();
+      setAudioMuted(!audioMuted);
+    });
+  }
 
   /* ---------------- 유틸 ---------------- */
   function inBounds(r,c){ return r>=0 && r<ROWS && c>=0 && c<COLS; }
@@ -592,6 +1002,20 @@ html,body{
   }
   function currentWeapon(){ return WEAPONS.find(w=>w.id===currentWeaponId); }
 
+  // 상단 안내판(말풍선)에 튜토리얼/가이드 문구를 표시.
+  // priority:'high' 인 메시지는 항상 표시되고 잠시 동안 우선권을 가지며,
+  // priority:'low' 인 메시지는 그 우선권 시간 동안에는 표시되지 않고 넘어간다.
+  function showGuide(msg, opts){
+    opts = opts || {};
+    const now = Date.now();
+    if(opts.priority !== 'high' && now < guideLockUntil) return;
+    guideTextEl.textContent = msg;
+    guideBubble.classList.remove('pulse');
+    void guideBubble.offsetHeight;
+    guideBubble.classList.add('pulse');
+    if(opts.priority === 'high') guideLockUntil = now + 2600;
+  }
+
   /* ---------------- 랭킹(localStorage, 실패 시 세션 메모리로 대체) ---------------- */
   function loadRankings(){
     try{
@@ -603,9 +1027,9 @@ html,body{
     try{ localStorage.setItem(RANKING_KEY, JSON.stringify(list)); }
     catch(e){ memoryRankings = list; }
   }
-  function submitScore(newScore){
+  function submitScore(newScore, newLevel){
     const list = loadRankings();
-    const entry = { score:newScore, ts:Date.now() };
+    const entry = { score:newScore, level:newLevel, ts:Date.now() };
     list.push(entry);
     list.sort((a,b)=> b.score - a.score || a.ts - b.ts);
     const rank = list.indexOf(entry) + 1;
@@ -812,45 +1236,30 @@ html,body{
     return set;
   }
 
-  // 검: 매치된 줄 양 끝으로 "자른 길이만큼" 더 확장해서 다른 색 블록도 함께 파괴
+  // 검: 매치된 줄(가로 또는 세로) 전체를 일자로 베어버려 다른 색 블록도 함께 파괴
   function extendSword(runs){
     const result = new Set();
     for(const run of runs){
-      const len = run.end - run.start + 1;
       if(run.axis==='row'){
-        for(let c=run.start-len; c<run.start; c++){ if(inBounds(run.row,c)){ const id=board[run.row][c]; if(id) result.add(id);} }
-        for(let c=run.end+1; c<=run.end+len; c++){ if(inBounds(run.row,c)){ const id=board[run.row][c]; if(id) result.add(id);} }
+        for(let c=0;c<COLS;c++){ const id=board[run.row][c]; if(id) result.add(id); }
       } else {
-        for(let r=run.start-len; r<run.start; r++){ if(inBounds(r,run.col)){ const id=board[r][run.col]; if(id) result.add(id);} }
-        for(let r=run.end+1; r<=run.end+len; r++){ if(inBounds(r,run.col)){ const id=board[r][run.col]; if(id) result.add(id);} }
+        for(let r=0;r<ROWS;r++){ const id=board[r][run.col]; if(id) result.add(id); }
       }
     }
     return result;
   }
 
-  // 전기톱: 검의 효과 + 한쪽 끝에서 한 번 꺾어서(수직/수평 전환) 추가로 파괴
+  // 전기톱: 매치 중심을 지나는 가로 한 줄 + 세로 한 줄을 모두 베어 십자(+) 모양으로 파괴
   function extendChainsaw(runs){
-    const result = extendSword(runs);
+    const result = new Set();
     for(const run of runs){
-      const len = run.end - run.start + 1;
+      const mid = Math.floor((run.start+run.end)/2);
       if(run.axis==='row'){
-        let bendCol = run.end + len;
-        if(!inBounds(run.row, bendCol)) bendCol = run.start - len;
-        if(inBounds(run.row, bendCol)){
-          const half = Math.floor(len/2);
-          for(let r=run.row-half; r<=run.row+half; r++){
-            if(inBounds(r,bendCol)){ const id=board[r][bendCol]; if(id) result.add(id); }
-          }
-        }
+        for(let c=0;c<COLS;c++){ const id=board[run.row][c]; if(id) result.add(id); }
+        for(let r=0;r<ROWS;r++){ const id=board[r][mid]; if(id) result.add(id); }
       } else {
-        let bendRow = run.end + len;
-        if(!inBounds(bendRow, run.col)) bendRow = run.start - len;
-        if(inBounds(bendRow, run.col)){
-          const half = Math.floor(len/2);
-          for(let c=run.col-half; c<=run.col+half; c++){
-            if(inBounds(bendRow,c)){ const id=board[bendRow][c]; if(id) result.add(id); }
-          }
-        }
+        for(let r=0;r<ROWS;r++){ const id=board[r][run.col]; if(id) result.add(id); }
+        for(let c=0;c<COLS;c++){ const id=board[mid][c]; if(id) result.add(id); }
       }
     }
     return result;
@@ -869,6 +1278,7 @@ html,body{
         // 매치가 안 만들어졌으면 흔들고 원위치로 복귀
         a.el.classList.add('invalid-shake');
         b.el.classList.add('invalid-shake');
+        sfxInvalidSwap();
         setTimeout(()=>{
           a.el.classList.remove('invalid-shake');
           b.el.classList.remove('invalid-shake');
@@ -931,7 +1341,11 @@ html,body{
   /* ---------------- 공주 피해 처리 (게임오버/Power감소 대신 화면을 잠깐 가림) ---------------- */
   function triggerPrincessHurtPenalty(){
     inputLocked = true;
+    timePower = Math.max(0, timePower - PRINCESS_HIT_PENALTY);
+    renderTimer();
     princessHurtOverlay.classList.add('show');
+    showGuide(GUIDE_MESSAGES.hurt, {priority:'high'});
+    sfxPrincessHurt();
     setTimeout(()=>{
       princessHurtOverlay.classList.remove('show');
       inputLocked = false;
@@ -939,33 +1353,84 @@ html,body{
   }
 
   /* ---------------- 파괴 -> 낙하 -> 연쇄(콤보) ---------------- */
-  function destroyAndCascade(idsSet, scoreMulTotal, cascadeDepth, particleKindOverride){
+  function destroyAndCascade(idsSet, scoreMulTotal, cascadeDepth, particleKindOverride, chainTainted){
     const ids = [...idsSet].filter(id=>blocks[id]);
     if(ids.length===0){ checkPrincessAtBottom(); return; }
 
     const hasPrincess = ids.some(id=>blocks[id].type==='princess');
+    // 이번 파괴에 공주가 포함되었거나, 앞서 이어진 연쇄(콤보) 중 공주가 다친 적이 있다면
+    // 이번 턴은 물론 이어지는 연쇄 전체에서 Power 회복 보상을 주지 않는다.
+    const restoreBlocked = hasPrincess || !!chainTainted;
 
     let gained = Math.round(ids.length * 10 * scoreMulTotal);
     if(ids.length>=5) gained += 25;
     if(ids.length>=8) gained += 40;
     score += gained;
+
+    if(hasPrincess){
+      // 공주가 다친 파괴는 Power를 회복시키지 않고, 페널티(감소)만 적용
+      triggerPrincessHurtPenalty();
+    } else if(!restoreBlocked){
+      // 콤보(연쇄)일수록 Power를 더 많이 회복 + 화려한 콤보 이펙트
+      const comboNum = cascadeDepth + 1;
+      const comboMul = 1 + cascadeDepth * 0.6;
+      const restoreAmount = ids.length * TIME_RESTORE_PER_BLOCK * comboMul;
+      timePower = Math.min(TIME_MAX, timePower + restoreAmount);
+      renderTimer();
+
+      if(cascadeDepth>0){
+        showComboPopup(comboNum);
+        showGuide(comboNum+' 콤보! Power가 팍팍 채워져요 ⚡', {priority:'low'});
+        sfxCombo(comboNum);
+      }
+    } else if(cascadeDepth>0){
+      // 공주 피해로 오염된 연쇄: 회복은 없지만 콤보 연출만 보여준다
+      showComboPopup(cascadeDepth+1);
+      sfxCombo(cascadeDepth+1);
+    }
+
     updateHud();
     updateLevelAndWeapons();
-    if(cascadeDepth>0) showToast('🔥 콤보 x'+(cascadeDepth+1)+'! +'+gained);
 
     const particleKind = particleKindOverride || (cascadeDepth>0 ? 'bone' : (currentWeapon().id==='chainsaw' ? 'spark' : 'bone'));
+    const isBurn = particleKind === 'fire';
+
+    // 무기별 타격 효과음 (연쇄 콤보는 무기음 대신 가벼운 파열음)
+    if(cascadeDepth===0){
+      const weaponSfxId = particleKindOverride==='fire' ? 'flamethrower' : currentWeaponId;
+      if(weaponSfxId==='scythe') sfxScythe();
+      else if(weaponSfxId==='sword') sfxSword();
+      else if(weaponSfxId==='chainsaw') sfxChainsaw();
+      else if(weaponSfxId==='flamethrower') sfxFlamethrower();
+    } else {
+      sfxCascadeBreak();
+    }
+
+    // 파괴되는 몬스터 종류별 비명 소리 (같은 종류는 한 번만, 살짝 시차를 둬서 자연스럽게)
+    const screamTypes = new Set();
+    ids.forEach(id=>{ const b=blocks[id]; if(b && b.type!=='princess') screamTypes.add(b.type); });
+    let screamIdx = 0;
+    screamTypes.forEach(t=>{
+      const fn = SCREAM_BY_TYPE[t];
+      if(fn){ const delayMs = screamIdx*70; setTimeout(fn, delayMs); }
+      screamIdx++;
+    });
 
     for(const id of ids){
       const b = blocks[id]; if(!b) continue;
       const c = blockCenter(b);
-      spawnParticles(c, particleKind, particleKind==='fire' ? 16 : (particleKind==='spark' ? 13 : 11));
-      b.el.classList.add('destroying');
+      if(isBurn){
+        // 화염방사기: 불타오르다가 재가 되어 흩날리는 연출
+        spawnParticles(c, 'fire', 10);
+        spawnParticles(c, 'ash', 10);
+        b.el.classList.add('burning');
+      } else {
+        spawnParticles(c, particleKind, particleKind==='spark' ? 13 : 11);
+        b.el.classList.add('destroying');
+      }
     }
 
-    if(hasPrincess){
-      triggerPrincessHurtPenalty(); // 게임은 계속 진행되고, 화면만 잠깐 가려짐
-    }
-
+    const removeDelay = isBurn ? 640 : 210;
     setTimeout(()=>{
       for(const id of ids){
         const b = blocks[id]; if(!b) continue;
@@ -979,12 +1444,39 @@ html,body{
         if(state!=='playing') return;
         const nextMatches = scanAllMatches();
         if(nextMatches.size>0){
-          destroyAndCascade(nextMatches, Math.min(2.2, 1 + (cascadeDepth+1)*0.3), cascadeDepth+1);
+          destroyAndCascade(nextMatches, Math.min(2.2, 1 + (cascadeDepth+1)*0.3), cascadeDepth+1, undefined, restoreBlocked);
         } else {
           checkPrincessAtBottom();
         }
       }, 340);
-    }, 210);
+    }, removeDelay);
+  }
+
+  // 콤보 단계별 라벨/색상
+  function comboLabel(n){
+    if(n>=6) return { text:n+' COMBO!!', sub:'🤯 믿을 수 없어요!!', color:'#ff5fae' };
+    if(n>=5) return { text:n+' COMBO!',  sub:'🔥 굉장해요!',       color:'#ff7a2e' };
+    if(n>=4) return { text:n+' COMBO!',  sub:'⚡ 대박이에요!',     color:'#ffcf3b' };
+    if(n>=3) return { text:n+' COMBO!',  sub:'✨ 좋아요!',         color:'#9ce66b' };
+    return   { text:n+' COMBO!',         sub:'',                   color:'#8fd0ff' };
+  }
+
+  function showComboPopup(comboNum){
+    const info = comboLabel(comboNum);
+    const el = document.createElement('div');
+    el.className = 'combo-popup';
+    el.style.color = info.color;
+    el.style.fontSize = (26 + Math.min(comboNum,6)*4) + 'px';
+    el.innerHTML = info.text + (info.sub ? '<div class="combo-sub">'+info.sub+'</div>' : '');
+    boardWrap.appendChild(el);
+    requestAnimationFrame(()=> el.classList.add('show'));
+    el.addEventListener('animationend', ()=> el.remove());
+
+    if(comboNum>=4){
+      boardWrap.classList.remove('shake');
+      void boardWrap.offsetHeight;
+      boardWrap.classList.add('shake');
+    }
   }
 
   function scanAllMatches(){
@@ -1019,6 +1511,7 @@ html,body{
         const spawnAboveOffset = emptyCount - i;
         const b = createBlock(type, newRow, c, spawnAboveOffset);
         board[newRow][c] = b.id;
+        if(type==='princess'){ showGuide(GUIDE_MESSAGES.princessSpawn, {priority:'low'}); sfxPrincessSpawn(); }
       }
     }
   }
@@ -1042,8 +1535,9 @@ html,body{
     lastCooldownSecRendered = -1;
     renderWeaponBar();
 
-    if(ids.size===0){ showToast('🔥 근처에 태울 좀비가 없어요...'); return; }
+    if(ids.size===0){ showToast('🔥 근처에 태울 몬스터가 없어요...'); return; }
     showToast('🔥 화염방사기 발사! ('+ids.size+'마리 제거)');
+    noiseBurst({dur:0.45, freq:130, freqEnd:50, gain:0.4, filterType:'lowpass'});
     destroyAndCascade(ids, 1.3, 0, 'fire');
   }
 
@@ -1058,21 +1552,44 @@ html,body{
   function rescuePrincess(b){
     score += RESCUE_BONUS;
     timePower = TIME_MAX; // 공주 구출 보상: Power를 완전히 채워줌
+    powerFreezeUntil = Date.now() + RESCUE_KISS_VISIBLE_MS + RESCUE_POWER_FREEZE_EXTRA_MS;
     renderTimer();
     updateHud();
     showToast('👑 공주님 구출 성공! +'+RESCUE_BONUS+' / Power 완충!');
+    showGuide(GUIDE_MESSAGES.rescued, {priority:'high'});
+    sfxPrincessRescue();
+
     const c = blockCenter(b);
-    // 구출은 어려운 만큼 확실히 화려하게: 큰 파티클 + 보드 전체 골드 플래시
+    // 구출은 어려운 만큼 확실히 화려하게: 큰 파티클 + 보드 전체 골드 플래시 + 공주 등장 연출
     spawnParticles(c, 'gold', 34);
     spawnShockwave(c, 'gold');
     rescueFlashEl.classList.remove('show'); void rescueFlashEl.offsetHeight;
     rescueFlashEl.classList.add('show');
     b.el.classList.add('rescued');
+
+    inputLocked = true;
+    rescueKissOverlay.classList.add('show');
+    setTimeout(()=>{
+      rescueKissOverlay.classList.remove('show');
+      inputLocked = false;
+    }, RESCUE_KISS_VISIBLE_MS);
+
     setTimeout(()=>{
       board[b.row][b.col] = null;
       b.el.remove();
       delete blocks[b.id];
       applyGravityAndRefill();
+
+      // 구출로 인한 낙하 이후에도 3매치가 그대로 남아있지 않도록 다시 검사한다
+      setTimeout(()=>{
+        if(state!=='playing') return;
+        const matches = scanAllMatches();
+        if(matches.size>0){
+          destroyAndCascade(matches, 1, 0);
+        } else {
+          checkPrincessAtBottom();
+        }
+      }, 340);
     }, 420);
   }
 
@@ -1080,13 +1597,17 @@ html,body{
     if(state !== 'playing') return;
     state = 'gameover';
     cancelAnimationFrame(rafId);
+    stopIdleTaunt();
+    stopMusic();
+    sfxGameOver();
+    playMusic(GAMEOVER_TRACK, false);
 
-    let reasonText = '시간이 다 되어버렸어요... 좀비들이 너무 많았네요.';
+    let reasonText = '시간이 다 되어버렸어요... 몬스터들이 너무 많았네요.';
     if(reason==='princess_drain') reasonText = '공주님을 자꾸 다치게 해서 Power가 다 떨어졌어요...';
     $('#gameover-reason').textContent = reasonText;
     $('#final-score').textContent = score;
 
-    const result = submitScore(score);
+    const result = submitScore(score, level);
     renderRanking(result);
 
     switchScreen('gameover');
@@ -1099,7 +1620,7 @@ html,body{
       const li = document.createElement('li');
       const isMine = entry === result.entry;
       li.className = 'rank-row' + (isMine ? ' mine' : '');
-      li.innerHTML = '<span class="rank-num">'+(idx+1)+'위</span><span class="rank-score">'+entry.score+'점</span>';
+      li.innerHTML = '<span class="rank-num">'+(idx+1)+'위</span><span class="rank-score">'+entry.score+'점 <span class="rank-level">(Lv.'+(entry.level||1)+')</span></span>';
       listEl.appendChild(li);
     });
     const myRankEl = $('#my-rank');
@@ -1120,7 +1641,7 @@ html,body{
         playWeaponUnlockAnimation(justUnlocked);
       } else {
         renderWeaponBar();
-        showToast('🎉 레벨 '+level+' 달성! 좀비가 더 빨라져요');
+        showToast('🎉 레벨 '+level+' 달성! 몬스터가 더 빨라져요');
       }
     }
     updateHud();
@@ -1131,6 +1652,8 @@ html,body{
     renderWeaponBar(); // 슬롯을 먼저 그려서 목표 좌표를 계산할 수 있게 함
     const slotEl = weaponBarEl.querySelector('[data-weapon-id="'+weapon.id+'"]');
     showToast('🎉 레벨 '+level+'! 새 무기 해금: '+weapon.name);
+    showGuide(GUIDE_MESSAGES.weaponUnlocked(weapon.name), {priority:'high'});
+    sfxWeaponUnlock();
     if(!slotEl) return;
 
     const targetRect = slotEl.getBoundingClientRect();
@@ -1170,11 +1693,21 @@ html,body{
     lastFrameTs = ts;
 
     const depletionRate = TIME_BASE_DEPLETION + (level-1)*TIME_DEPLETION_PER_LEVEL;
-    timePower -= depletionRate * dt;
+    if(Date.now() >= powerFreezeUntil){
+      timePower -= depletionRate * dt;
+    }
     if(timePower <= 0){
       timePower = 0; renderTimer(); triggerGameOver('timeout'); return;
     }
     renderTimer();
+
+    // Power가 부족할 때 한 번만 경고 (다시 여유로워지면 재무장)
+    if(timePower < 22 && !lowPowerWarned){
+      lowPowerWarned = true;
+      showGuide(GUIDE_MESSAGES.lowPower, {priority:'high'});
+    } else if(timePower > 40){
+      lowPowerWarned = false;
+    }
 
     if(flamethrowerState.cooldownLeft>0){
       flamethrowerState.cooldownLeft = Math.max(0, flamethrowerState.cooldownLeft - dt*1000);
@@ -1183,7 +1716,11 @@ html,body{
         lastCooldownSecRendered = sec;
         renderWeaponBar();
       }
+      if(flamethrowerState.cooldownLeft<=0 && prevFlameCooldownLeft>0){
+        showGuide(GUIDE_MESSAGES.flamethrowerReady, {priority:'low'});
+      }
     }
+    prevFlameCooldownLeft = flamethrowerState.cooldownLeft;
 
     rafId = requestAnimationFrame(tickLoop);
   }
@@ -1224,18 +1761,29 @@ html,body{
         if(w.id==='flamethrower'){
           if(flamethrowerState.cooldownLeft<=0){
             slot.addEventListener('click', ()=>{
+              sfxClick();
               flamethrowerState.armed = !flamethrowerState.armed;
               boardWrap.classList.toggle('targeting', flamethrowerState.armed);
               renderWeaponBar();
-              if(flamethrowerState.armed) showToast('🔥 조준 중... 폭파할 좀비를 탭하세요');
+              if(flamethrowerState.armed) showToast('🔥 조준 중... 폭파할 몬스터를 탭하세요');
             });
           }
         } else {
-          slot.addEventListener('click', ()=>{ currentWeaponId = w.id; renderWeaponBar(); });
+          slot.addEventListener('click', ()=>{ sfxClick(); currentWeaponId = w.id; renderWeaponBar(); });
         }
       }
       weaponBarEl.appendChild(slot);
     }
+    updateWeaponDescription();
+  }
+
+  // 현재 장착(또는 조준 중)인 무기의 설명을 하단 안내 문구로 표시
+  function updateWeaponDescription(){
+    let id = currentWeaponId;
+    if(flamethrowerState.armed || flamethrowerState.cooldownLeft>0) id = 'flamethrower';
+    const w = WEAPONS.find(x=>x.id===id);
+    if(!w) return;
+    weaponDescEl.innerHTML = '<b>'+w.icon+' '+w.name+'</b> — ' + WEAPON_DESC[id];
   }
 
   /* ---------------- 화면 전환 / 초기화 ---------------- */
@@ -1250,8 +1798,13 @@ html,body{
     flamethrowerState = { armed:false, cooldownLeft:0 };
     lastCooldownSecRendered = -1;
     inputLocked = false;
+    powerFreezeUntil = 0;
+    guideLockUntil = 0;
+    lowPowerWarned = false;
+    prevFlameCooldownLeft = 0;
     boardWrap.classList.remove('targeting');
     princessHurtOverlay.classList.remove('show');
+    rescueKissOverlay.classList.remove('show');
     rescueFlashEl.classList.remove('show');
     clearBoardDom();
     state='playing';
@@ -1259,6 +1812,15 @@ html,body{
     updateHud();
     renderWeaponBar();
     renderTimer();
+
+    ensureAudio();
+    stopMusic();
+    playMusic(GAMEPLAY_TRACK, true);
+    sfxTauntCackle();
+    scheduleIdleTaunt();
+
+    showGuide(GUIDE_MESSAGES.start, {priority:'high'});
+    setTimeout(()=>{ if(state==='playing') showGuide(GUIDE_MESSAGES.howto, {priority:'low'}); }, 3200);
 
     requestAnimationFrame(()=>{
       recalcCellSize();
@@ -1268,11 +1830,17 @@ html,body{
     });
   }
 
-  function goHome(){ state='start'; switchScreen('start'); }
+  function goHome(){
+    state='start';
+    stopIdleTaunt();
+    stopMusic();
+    playMusic(TITLE_TRACK, true);
+    switchScreen('start');
+  }
 
-  $('#btn-start').addEventListener('click', startGame);
-  $('#btn-restart').addEventListener('click', startGame);
-  $('#btn-home').addEventListener('click', goHome);
+  $('#btn-start').addEventListener('click', ()=>{ sfxClick(); startGame(); });
+  $('#btn-restart').addEventListener('click', ()=>{ sfxClick(); startGame(); });
+  $('#btn-home').addEventListener('click', ()=>{ sfxClick(); goHome(); });
 
   boardWrap.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointermove', onPointerMove);
